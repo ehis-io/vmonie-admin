@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api, qs } from "../../../../lib/api";
 import { useCan } from "../../../../lib/access";
-import { age, formatDateTime, humanize } from "../../../../lib/format";
+import { age, formatDateTime, humanize, providerLabel } from "../../../../lib/format";
 import { formatKobo } from "../../../../lib/money";
 import { useDocumentTitle } from "../../../../lib/useDocumentTitle";
 import { useResource } from "../../../../lib/useResource";
@@ -220,7 +220,7 @@ export default function CustomerDetailPage() {
               ["Date of birth", c.dateOfBirth?.slice(0, 10)],
               ["PIN failures", c.pinFailures],
               ["PIN reset required", c.pinResetRequired ? "Yes" : "No"],
-              ["Bridge KYC", c.dutchmanKycStatus ? <Badge key="b">{c.dutchmanKycStatus}</Badge> : "—"],
+              ["Partner KYC", c.dutchmanKycStatus ? <Badge key="b">{c.dutchmanKycStatus}</Badge> : "—"],
               ["PIN locked until", c.pinLockedUntil ? formatDateTime(c.pinLockedUntil) : "—"],
               ["Consents", `Terms ${c.termsVersion}, privacy ${c.privacyVersion} (${formatDateTime(c.consentedAt)})`],
               ["Joined", formatDateTime(c.createdAt)],
@@ -269,7 +269,7 @@ export default function CustomerDetailPage() {
                 <td>
                   <Badge>{a.status}</Badge>
                 </td>
-                <td>{a.bankName ?? a.providerCode}</td>
+                <td>{a.bankName ?? providerLabel(a.providerCode)}</td>
                 <td className="tabular-nums">
                   {a.ledgerBalanceMinor === null ? "—" : formatKobo(a.ledgerBalanceMinor)}
                 </td>

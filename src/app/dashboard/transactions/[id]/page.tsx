@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api } from "../../../../lib/api";
-import { formatDateTime, humanize, maskAccount } from "../../../../lib/format";
+import { formatDateTime, humanize, maskAccount, providerLabel } from "../../../../lib/format";
 import { formatKobo } from "../../../../lib/money";
 import { useDocumentTitle } from "../../../../lib/useDocumentTitle";
 import { useResource } from "../../../../lib/useResource";
@@ -177,7 +177,7 @@ export default function TransactionDetailPage() {
               ["Name", t.counterpartyName],
               ["Bank", `${t.counterpartyBank ?? "—"} ${t.counterpartyBankCode ? `(${t.counterpartyBankCode})` : ""}`],
               ["Account", <span key="a" className="font-mono">{maskAccount(t.counterpartyAccount)}</span>],
-              ["Provider", t.providerCode],
+              ["Provider", providerLabel(t.providerCode)],
               ["Provider reference", <span key="p" className="font-mono text-xs">{t.providerReference ?? "—"}</span>],
               ["Status checks", t.statusChecks],
               [

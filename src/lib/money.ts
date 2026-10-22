@@ -63,7 +63,7 @@ export function parseNairaToKobo(input: string): ParsedAmount {
 }
 
 /**
- * A naira decimal string as Bridge sends it (`"1200.5"`) → `"₦1,200.50"`.
+ * A naira decimal string as the payments partner sends it (`"1200.5"`) → `"₦1,200.50"`.
  * String arithmetic only. Null → `"—"`.
  */
 export function formatNairaDecimal(value: string | null | undefined): string {

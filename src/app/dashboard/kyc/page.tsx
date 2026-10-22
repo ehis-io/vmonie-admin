@@ -93,7 +93,7 @@ function Queue({
                   )}
                   {i.bridgeKycStatus && (
                     <span className="flex items-center gap-2 rounded border border-surface-border px-2 py-1">
-                      <span className="text-xs font-semibold text-foreground">Bridge</span>
+                      <span className="text-xs font-semibold text-foreground">Partner</span>
                       <Badge>{i.bridgeKycStatus}</Badge>
                     </span>
                   )}
@@ -182,7 +182,7 @@ export default function KycPage() {
           ]}
         />
         <Select
-          label="Bridge KYC"
+          label="Partner KYC"
           value={bridgeStatus}
           onChange={(e) => setBridgeStatus(e.target.value)}
           options={[

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { api, qs } from "../../../lib/api";
 import { useCan } from "../../../lib/access";
-import { formatDateTime, humanize, lagosToday, shortId } from "../../../lib/format";
+import { formatDateTime, humanize, lagosToday, providerLabel, shortId } from "../../../lib/format";
 import { formatKobo } from "../../../lib/money";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useResource } from "../../../lib/useResource";
@@ -70,7 +70,7 @@ function Exceptions({ status }: { status: "OPEN" | "RESOLVED" }) {
                 {formatKobo(r.amountMinor)}
               </td>
               <td className="font-mono text-xs">
-                {r.providerCode}
+                {providerLabel(r.providerCode)}
                 <span className="block">{r.providerReference ?? "—"}</span>
               </td>
               <td>

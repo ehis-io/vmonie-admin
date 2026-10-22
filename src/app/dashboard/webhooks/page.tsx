@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatDateTime, humanize } from "../../../lib/format";
+import { formatDateTime, humanize, providerLabel } from "../../../lib/format";
 import { qs } from "../../../lib/api";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useResource } from "../../../lib/useResource";
@@ -36,7 +36,7 @@ function List({ status }: { status: string }) {
           {res.data.items.map((w) => (
             <tr key={w.id}>
               <td className="whitespace-nowrap">{formatDateTime(w.receivedAt)}</td>
-              <td>{w.providerCode}</td>
+              <td>{providerLabel(w.providerCode)}</td>
               <td className="font-mono text-xs">{w.eventType ?? "—"}</td>
               <td>
                 <Badge>{w.status}</Badge>

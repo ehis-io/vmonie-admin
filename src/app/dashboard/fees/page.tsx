@@ -114,8 +114,8 @@ function EditFee({
       {() => (
         <form onSubmit={save} className="space-y-4">
           <p className="text-sm text-muted">
-            Vmonie&apos;s markup on top of Dutchman Bridge&apos;s own fee. Bridge
-            charges it on every {rule.label.toLowerCase()} the moment you save.
+            Vmonie&apos;s markup on top of the payments partner&apos;s own fee. The
+            partner charges it on every {rule.label.toLowerCase()} the moment you save.
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <TextInput
@@ -184,7 +184,7 @@ function EditFee({
               busy={busy}
               disabled={problems.length > 0}
             >
-              Save on Bridge
+              Save with partner
             </Button>
           </div>
         </form>
@@ -221,7 +221,7 @@ function Earnings() {
       }
     >
       <p className="mb-3 text-xs text-muted">
-        What the markup earned, as Bridge credited it{from || to ? " in the period" : ", all time"}.
+        What the markup earned, as the partner credited it{from || to ? " in the period" : ", all time"}.
         &ldquo;Held&rdquo; is on transfers still in flight, credited when they complete.
       </p>
       <ErrorBox error={res.error} />
@@ -249,8 +249,8 @@ function Earnings() {
 }
 
 /**
- * Vmonie's fee markup (zemfi-admin's Fees page). Read live from Dutchman
- * Bridge, which charges it; every change goes to Bridge first and is audited
+ * Vmonie's fee markup (zemfi-admin's Fees page). Read live from the payments
+ * partner, which charges it; every change goes to the partner first and is audited
  * here with a reason. SUPER_ADMIN only.
  */
 export default function FeesPage() {
@@ -274,7 +274,7 @@ export default function FeesPage() {
     <>
       <PageHeader
         title="Fees"
-        description="Vmonie's markup on each flow, charged by Dutchman Bridge on top of its own fee."
+        description="Vmonie's markup on each flow, charged by the payments partner on top of its own fee."
         actions={
           <Button variant="secondary" busy={res.loading} onClick={res.reload}>
             Refresh
@@ -309,7 +309,7 @@ export default function FeesPage() {
                     </p>
                     <p className="mt-1 text-xs text-muted" title={formatDateTime(r.updatedAt)}>
                       {!r.configured
-                        ? "Not set on Bridge yet: charges nothing."
+                        ? "Not set with the payments partner yet: charges nothing."
                         : r.updatedByName
                           ? `Changed by ${r.updatedByName} ${age(r.updatedAt)}${r.lastReason ? ` — “${r.lastReason}”` : ""}`
                           : r.updatedAt

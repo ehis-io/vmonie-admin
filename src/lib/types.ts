@@ -394,7 +394,7 @@ export interface FeatureFlag {
   updatedAt: string | null;
 }
 
-// ─── Fees (GET /admin/fees), read live from Dutchman Bridge ─────────────
+// ─── Fees (GET /admin/fees), read live from the payments partner ────────
 
 export interface FeeRule {
   flow: string;
@@ -407,7 +407,7 @@ export interface FeeRule {
   feeMin: string | null;
   feeMax: string | null;
   active: boolean;
-  /** False when Bridge holds no rule yet (charges nothing). */
+  /** False when the partner holds no rule yet (charges nothing). */
   configured: boolean;
   updatedAt: string | null;
   updatedByName: string | null;

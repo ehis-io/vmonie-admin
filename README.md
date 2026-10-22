@@ -55,8 +55,8 @@ Type-check with `npx tsc --noEmit`.
 | Reports | `/dashboard/reports` | Daily totals for a date (FINANCE/OPERATIONS), plus system ledger balances and an integrity check (FINANCE). |
 | Audit log | `/dashboard/audit` | Privileged-action log and "Verify chain" (COMPLIANCE). |
 | Features | `/dashboard/features` | The app's feature switches (LIVE / COMING_SOON / OFF, with the message customers see). Anyone reads; OPERATIONS changes, with an audited reason. |
-| KYC | `/dashboard/kyc` | Customers by latest identity-check status (tabs with counts), filterable by customer status, tier and Bridge KYC status, longest waiting first. |
-| Fees | `/dashboard/fees` | Vmonie's markup per flow/currency, read live from Dutchman Bridge; edit with a reason (audited); earnings. SUPER_ADMIN. |
+| KYC | `/dashboard/kyc` | Customers by latest identity-check status (tabs with counts), filterable by customer status, tier and partner KYC status, longest waiting first. |
+| Fees | `/dashboard/fees` | Vmonie's markup per flow/currency, read live from the payments partner; edit with a reason (audited); earnings. SUPER_ADMIN. |
 | Admins | `/dashboard/admins` (was `/dashboard/admin-users`, redirected) | Staff list; create, edit roles, deactivate/reactivate, each with an audited reason (SUPER_ADMIN). You cannot deactivate yourself or remove the last active SUPER_ADMIN. |
 
 ## Rules the code keeps

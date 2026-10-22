@@ -48,3 +48,12 @@ export const shortId = (id: string | null | undefined): string =>
 
 export const humanize = (s: string | null | undefined): string =>
   s ? s.replace(/_/g, " ").toLowerCase().replace(/^./, (c) => c.toUpperCase()) : "—";
+
+/**
+ * A provider code for display. The banking partner's code is an internal
+ * identifier, so staff see its role instead; other codes show as sent.
+ */
+export function providerLabel(code: string | null | undefined): string {
+  if (!code) return "—";
+  return code === "dutchman" ? "Payments partner" : code;
+}
