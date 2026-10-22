@@ -25,7 +25,7 @@ admins, e.g. `ops@vmonie.dev`.
 
 | Variable              | Default                        | Description |
 | --------------------- | ------------------------------ | ----------- |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:4100/api/v1` | API base URL including `/api/v1`. Inlined at build time, so set it before `next build`. |
+| `NEXT_PUBLIC_API_URL` | `https://internal.zemfi.ng/api/v1` | API base URL including `/api/v1`; use `http://localhost:4100/api/v1` for a local backend. Inlined at build time, so set it before `next build`. |
 
 | Command         | What it does                     |
 | --------------- | -------------------------------- |

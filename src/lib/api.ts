@@ -1,7 +1,7 @@
 "use client";
 
 // Point at another backend with NEXT_PUBLIC_API_URL (inlined at build time).
-const DEFAULT_API_URL = "http://localhost:4100/api/v1";
+const DEFAULT_API_URL = "https://internal.zemfi.ng/api/v1";
 
 export const API_URL = (
   process.env.NEXT_PUBLIC_API_URL?.trim() || DEFAULT_API_URL
