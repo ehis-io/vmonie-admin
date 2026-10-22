@@ -43,11 +43,11 @@ function VerifyChain() {
       {v &&
         !res.loading &&
         (v.ok ? (
-          <span className="text-sm text-green-800">
+          <span className="text-sm text-success">
             Chain intact across {v.rows} rows.
           </span>
         ) : (
-          <span className="text-sm font-semibold text-red-700">
+          <span className="text-sm font-semibold text-danger">
             Chain BROKEN at sequence {v.brokenAt} ({v.rows} rows checked). Escalate.
           </span>
         ))}

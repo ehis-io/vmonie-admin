@@ -1,34 +1,116 @@
 @import "tailwindcss";
 
+/*
+ * Same dark console look as zemfi-admin (and Dutchman Bridge's admin), in
+ * Vmonie's blue (#0756C7, the mobile app's primary). `primary-soft` is the
+ * readable tint of it for text and links on the dark surfaces.
+ */
 :root {
-  --background: #f6f7f9;
-  --foreground: #111827;
-  --surface: #ffffff;
-  --muted: #f1f3f5;
-  --muted-foreground: #6b7280;
-  --border: #e5e7eb;
-  --primary: #0f766e;
-  --primary-hover: #115e59;
-  --danger: #b91c1c;
+  --background: #0b1220;
+  --foreground: #f8fafc;
+  --muted: #94a3b8;
+  --primary: #0756c7;
+  --primary-hover: #1f6bdb;
+  --primary-soft: #8ab4ff;
+  --surface: #151e30;
+  --surface-raised: #1e293b;
+  --surface-border: #283548;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --radius: 0.75rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-surface: var(--surface);
   --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-border: var(--border);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-border: var(--surface-border);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
+html {
+  color-scheme: dark;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.input-field {
+  width: 100%;
+  background: rgba(11, 18, 32, 0.7);
+  border: 1px solid var(--surface-border);
+  color: var(--foreground);
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.5rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+  outline: none;
+  font-size: 0.875rem;
+}
+
+.input-field::placeholder {
+  color: #64748b;
+}
+
+.input-field:focus {
+  border-color: var(--primary-hover);
+  box-shadow: 0 0 0 3px rgba(7, 86, 199, 0.35);
+}
+
+.input-field:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+select.input-field {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.25rem;
+}
+
+.fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }

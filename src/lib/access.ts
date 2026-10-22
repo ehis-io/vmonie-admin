@@ -29,6 +29,15 @@ export const PERMISSIONS = {
   // Every /admin/compliance route (admin-compliance.controller.ts).
   manageCompliance: ["COMPLIANCE"],
   createAdmin: [],
+  // Feature switches (admin-features.controller.ts): any admin reads them,
+  // OPERATIONS changes them.
+  updateFeature: ["OPERATIONS"],
+  // Fees and staff accounts are the owner's (SUPER_ADMIN), as in zemfi.
+  manageFees: [],
+  manageAdmins: [],
+  // admin-customer-security.controller.ts: revoke a device, sign out
+  // everywhere, force a PIN reset.
+  customerSecurity: ["OPERATIONS"],
 } satisfies Record<string, AdminRole[]>;
 
 export type Permission = keyof typeof PERMISSIONS;
@@ -38,6 +47,11 @@ export function can(held: AdminRole[], permission: Permission): boolean {
   if (held.includes("SUPER_ADMIN")) return true;
   const required: AdminRole[] = PERMISSIONS[permission];
   return required.some((r) => held.includes(r));
+}
+
+/** zemfi's "owner": SUPER_ADMIN. Owner-only pages are hidden from others. */
+export function isOwner(held: AdminRole[]): boolean {
+  return held.includes("SUPER_ADMIN");
 }
 
 /** "Requires FINANCE" style hint for a disabled control. */

@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useDocumentTitle } from "../../lib/useDocumentTitle";
 import { useResource } from "../../lib/useResource";
 import { formatKobo } from "../../lib/money";
 import { age, formatDateTime, humanize, maskAccount } from "../../lib/format";
-import type { IntegrationHealth, Transaction } from "../../lib/types";
+import type { IntegrationHealth, OverviewStats, Transaction } from "../../lib/types";
 import {
   Badge,
   Button,
@@ -14,6 +15,7 @@ import {
   ErrorBox,
   Loading,
   PageHeader,
+  StatTile,
   Table,
 } from "../../components/ui";
 
@@ -28,20 +30,9 @@ function Tile({
   href?: string;
   warn?: boolean;
 }) {
-  const body = (
-    <div
-      className={`h-full rounded-lg border bg-surface p-4 ${
-        warn ? "border-amber-300 bg-amber-50" : "border-border"
-      }`}
-    >
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <div className="mt-1 text-2xl font-semibold">{value}</div>
-    </div>
-  );
+  const body = <StatTile label={label} value={value} warn={warn} />;
   return href ? (
-    <Link href={href} className="block hover:opacity-90">
+    <Link href={href} className="block rounded-xl transition-opacity hover:opacity-90">
       {body}
     </Link>
   ) : (
@@ -57,7 +48,7 @@ function Counts({
   empty: string;
 }) {
   const entries = Object.entries(counts);
-  if (!entries.length) return <p className="text-sm text-muted-foreground">{empty}</p>;
+  if (!entries.length) return <p className="text-sm text-muted">{empty}</p>;
   return (
     <ul className="space-y-1 text-sm">
       {entries.map(([k, v]) => (
@@ -70,17 +61,86 @@ function Counts({
   );
 }
 
+/** zemfi's overview tiles: where the product stands right now. */
+function Stats() {
+  const res = useResource<OverviewStats>("/admin/stats");
+  const s = res.data;
+  if (!s) return res.error ? <ErrorBox error={res.error} /> : <Loading />;
+  const tiers = Object.entries(s.customers.byTier)
+    .map(([t, n]) => `T${t}: ${n.toLocaleString()}`)
+    .join(" · ");
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Tile
+          label="Customers"
+          value={s.customers.total.toLocaleString()}
+          href="/dashboard/users"
+        />
+        <Tile label="Verified" value={(s.customers.byStatus.VERIFIED ?? 0).toLocaleString()} />
+        <Tile
+          label="Restricted"
+          value={(s.customers.byStatus.RESTRICTED ?? 0).toLocaleString()}
+          warn={(s.customers.byStatus.RESTRICTED ?? 0) > 0}
+        />
+        <Tile label="New in 7 days" value={s.customers.newLast7Days.toLocaleString()} />
+        <Tile
+          label="Accounts open"
+          value={s.accounts.open.toLocaleString()}
+        />
+        <Tile label="Opened today" value={s.accounts.openedToday.toLocaleString()} />
+        <Tile
+          label="Pending transfers"
+          value={s.pendingTransfers.toLocaleString()}
+          href="#pending"
+          warn={s.transfersNeedingReview > 0}
+        />
+        <Tile
+          label="Open compliance holds"
+          value={s.openComplianceHolds.toLocaleString()}
+          href="/dashboard/compliance"
+          warn={s.openComplianceHolds > 0}
+        />
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <Card title="Deposits today">
+          <p className="text-2xl font-bold tabular-nums text-foreground">
+            {formatKobo(s.today.deposits.volumeMinor)}
+          </p>
+          <p className="text-xs text-muted">
+            {s.today.deposits.count.toLocaleString()} successful since Lagos midnight
+          </p>
+        </Card>
+        <Card title="Transfers today">
+          <p className="text-2xl font-bold tabular-nums text-foreground">
+            {formatKobo(s.today.transfers.volumeMinor)}
+          </p>
+          <p className="text-xs text-muted">
+            {s.today.transfers.count.toLocaleString()} successful · fees{" "}
+            {formatKobo(s.today.transfers.feesMinor)} · {s.today.transfers.failed} failed
+          </p>
+        </Card>
+      </div>
+      <p className="mt-2 text-xs text-muted">
+        By tier: {tiers || "—"} · Open support cases: {s.openSupportCases}
+      </p>
+    </>
+  );
+}
+
 export default function DashboardPage() {
-  useDocumentTitle("Dashboard");
+  useDocumentTitle("Overview");
   const health = useResource<IntegrationHealth>("/admin/health/integrations");
   const pending = useResource<Transaction[]>("/admin/transactions/pending");
   const h = health.data;
+  // Remounting Stats refetches it with the rest.
+  const [statsKey, setStatsKey] = useState(0);
 
   return (
     <>
       <PageHeader
-        title="Dashboard"
-        description="Integration health and the transfers that are not final yet."
+        title="Overview"
+        description="Where Vmonie stands right now: customers, today's money, and integration health."
         actions={
           <Button
             variant="secondary"
@@ -88,12 +148,16 @@ export default function DashboardPage() {
             onClick={() => {
               health.reload();
               pending.reload();
+              setStatsKey((k) => k + 1);
             }}
           >
             Refresh
           </Button>
         }
       />
+      <Stats key={statsKey} />
+
+      <h2 className="mb-3 mt-8 text-sm font-semibold text-foreground">Integrations</h2>
       <ErrorBox error={health.error} />
       {!h && health.loading && <Loading />}
       {h && (
@@ -116,7 +180,7 @@ export default function DashboardPage() {
                 {h.lastVerifiedWebhookAt ? (
                   <>
                     {age(h.lastVerifiedWebhookAt)}
-                    <span className="block text-xs font-normal text-muted-foreground">
+                    <span className="block text-xs font-normal text-muted">
                       {formatDateTime(h.lastVerifiedWebhookAt)}
                     </span>
                   </>
@@ -158,7 +222,7 @@ export default function DashboardPage() {
                 <td>
                   <Link
                     href={`/dashboard/transactions/${t.id}`}
-                    className="font-mono text-xs text-primary hover:underline"
+                    className="font-mono text-xs text-primary-soft hover:underline"
                   >
                     {t.reference}
                   </Link>
@@ -169,7 +233,7 @@ export default function DashboardPage() {
                 <td className="tabular-nums">{formatKobo(t.amountMinor)}</td>
                 <td>
                   {t.counterpartyName ?? "—"}
-                  <span className="block text-xs text-muted-foreground">
+                  <span className="block text-xs text-muted">
                     {t.counterpartyBank} {maskAccount(t.counterpartyAccount)}
                   </span>
                 </td>

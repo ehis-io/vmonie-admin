@@ -59,14 +59,14 @@ function Results({ filters }: { filters: Filters }) {
               <td>
                 <Link
                   href={`/dashboard/transactions/${t.id}`}
-                  className="font-mono text-xs text-primary hover:underline"
+                  className="font-mono text-xs text-primary-soft hover:underline"
                 >
                   {t.reference}
                 </Link>
               </td>
               <td className="whitespace-nowrap">
                 {humanize(t.kind)}
-                <span className="block text-xs text-muted-foreground">
+                <span className="block text-xs text-muted">
                   {t.direction}
                 </span>
               </td>
@@ -81,15 +81,19 @@ function Results({ filters }: { filters: Filters }) {
               </td>
               <td>
                 {t.counterpartyName ?? "—"}
-                <span className="block text-xs text-muted-foreground">
-                  {t.counterpartyBank} {t.counterpartyAccount}
+                <span className="block text-xs text-muted">
+                  {t.bill
+                    ? [humanize(t.bill.type), t.bill.productName, t.counterpartyAccount]
+                        .filter(Boolean)
+                        .join(" · ")
+                    : `${t.counterpartyBank ?? ""} ${t.counterpartyAccount ?? ""}`}
                 </span>
               </td>
               <td>
                 {t.customerId ? (
                   <Link
-                    href={`/dashboard/customers/${t.customerId}`}
-                    className="font-mono text-xs text-primary hover:underline"
+                    href={`/dashboard/users/${t.customerId}`}
+                    className="font-mono text-xs text-primary-soft hover:underline"
                   >
                     {shortId(t.customerId)}
                   </Link>

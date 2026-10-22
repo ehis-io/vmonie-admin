@@ -18,7 +18,7 @@ export function CursorPager({
   busy?: boolean;
 }) {
   return (
-    <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+    <div className="mt-3 flex items-center justify-between text-sm text-muted">
       <span>Page {stack.length + 1}</span>
       <div className="flex gap-2">
         <Button

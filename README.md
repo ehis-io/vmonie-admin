@@ -17,8 +17,11 @@ npm install
 npm run dev                  # http://localhost:3101
 ```
 
-The backend must be running (`../backend`, port 4100). Dev login:
-`ops@vmonie.dev` / `dev-password-123` (SUPER_ADMIN).
+The backend must be running (`../backend`, port 4100). On a database with
+no admin users the backend creates a SUPER_ADMIN at startup
+(`BOOTSTRAP_ADMIN_*` in `../backend/.env.example`; outside production the
+default is `admin@vmonie.local`). An existing local database keeps its own
+admins, e.g. `ops@vmonie.dev`.
 
 | Variable              | Default                        | Description |
 | --------------------- | ------------------------------ | ----------- |
@@ -38,9 +41,9 @@ Type-check with `npx tsc --noEmit`.
 | Screen | Path | For |
 | --- | --- | --- |
 | Login | `/login` | Staff sign-in. |
-| Dashboard | `/dashboard` | Integration tiles (transfers in flight, needing review, open exceptions by kind, webhooks in the last 24h by status, last verified webhook) and the pending-transfer queue, oldest first. |
-| Customers | `/dashboard/customers` | Search by phone, name, full account number or id. |
-| Customer | `/dashboard/customers/:id` | Profile, identity checks, accounts with ledger balance, devices. Actions: reveal the account number (needs a reason, audited), restrict/unrestrict, freeze/unfreeze, retry account opening, and a link to the customer's transactions. |
+| Overview | `/dashboard` | Customer, account, today's deposit/transfer, pending-transfer and open-hold tiles (`/admin/stats`), then integration tiles (transfers in flight, needing review, open exceptions by kind, webhooks in the last 24h by status, last verified webhook) and the pending-transfer queue, oldest first. |
+| Users | `/dashboard/users` (was `/dashboard/customers`, redirected) | Search by phone, name, full account number or id. |
+| User | `/dashboard/users/:id` | Profile, identity checks, accounts with ledger balance, recent transactions, devices with live sessions. Security actions (OPERATIONS): revoke a device, sign out everywhere, force a PIN reset. Actions: reveal the account number (needs a reason, audited), restrict/unrestrict, freeze/unfreeze, retry account opening, and a link to the customer's transactions. |
 | Transactions | `/dashboard/transactions` | Filter by status, kind, reference or customer id, with cursor paging. |
 | Transaction | `/dashboard/transactions/:id` | Event timeline and ledger journals. Actions: requery the partner (never resends), and resolve by hand (NEEDS_REVIEW only, with an outcome and a reason). |
 | Reconciliation | `/dashboard/reconciliation` | Open and resolved exceptions, resolve with a note, run reconciliation for a Lagos date. An unmatched deposit can be assigned through an adjustment that is pre-filled with SUSPENSE, the amount and the exception id. |
@@ -51,7 +54,10 @@ Type-check with `npx tsc --noEmit`.
 | Webhooks | `/dashboard/webhooks` | Inbound partner events, filterable by status. |
 | Reports | `/dashboard/reports` | Daily totals for a date (FINANCE/OPERATIONS), plus system ledger balances and an integrity check (FINANCE). |
 | Audit log | `/dashboard/audit` | Privileged-action log and "Verify chain" (COMPLIANCE). |
-| Admin users | `/dashboard/admin-users` | Create staff accounts (SUPER_ADMIN). |
+| Features | `/dashboard/features` | The app's feature switches (LIVE / COMING_SOON / OFF, with the message customers see). Anyone reads; OPERATIONS changes, with an audited reason. |
+| KYC | `/dashboard/kyc` | Customers by latest identity-check status (tabs with counts), filterable by customer status, tier and Bridge KYC status, longest waiting first. |
+| Fees | `/dashboard/fees` | Vmonie's markup per flow/currency, read live from Dutchman Bridge; edit with a reason (audited); earnings. SUPER_ADMIN. |
+| Admins | `/dashboard/admins` (was `/dashboard/admin-users`, redirected) | Staff list; create, edit roles, deactivate/reactivate, each with an audited reason (SUPER_ADMIN). You cannot deactivate yourself or remove the last active SUPER_ADMIN. |
 
 ## Rules the code keeps
 

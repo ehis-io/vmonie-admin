@@ -43,12 +43,12 @@ export default function AdjustmentsPage() {
           canRequest ? (
             <Link
               href="/dashboard/adjustments/new"
-              className="rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-white hover:bg-primary-hover"
+              className="rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-white hover:bg-primary-hover"
             >
               Request adjustment
             </Link>
           ) : (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted">
               Requesting needs OPERATIONS or FINANCE
             </span>
           )
@@ -61,8 +61,8 @@ export default function AdjustmentsPage() {
             role="tab"
             aria-selected={status === s}
             onClick={() => setStatus(s)}
-            className={`rounded-md px-3 py-1.5 text-sm ${
-              status === s ? "bg-primary text-white" : "border border-border bg-surface"
+            className={`rounded-lg px-3 py-1.5 text-sm ${
+              status === s ? "bg-primary text-white" : "border border-surface-border bg-surface"
             }`}
           >
             {s ? humanize(s) : "All"}
@@ -83,16 +83,16 @@ export default function AdjustmentsPage() {
                 <tr key={a.id}>
                   <td className="whitespace-nowrap">
                     {formatDateTime(a.createdAt)}
-                    <span className="block text-xs text-muted-foreground">
+                    <span className="block text-xs text-muted">
                       by {who(a.requestedById)}
                     </span>
                   </td>
                   <td className="whitespace-nowrap tabular-nums">
-                    <span className={a.direction === "CREDIT" ? "text-green-700" : "text-red-700"}>
+                    <span className={a.direction === "CREDIT" ? "text-success" : "text-danger"}>
                       {a.direction === "CREDIT" ? "+" : "−"}
                       {formatKobo(a.amountMinor)}
                     </span>
-                    <span className="block text-xs text-muted-foreground">{a.direction}</span>
+                    <span className="block text-xs text-muted">{a.direction}</span>
                   </td>
                   <td className="font-mono text-xs" title={a.accountId}>
                     {shortId(a.accountId)}
@@ -100,7 +100,7 @@ export default function AdjustmentsPage() {
                   <td className="font-mono text-xs">
                     {a.counterLedgerCode}
                     {a.reconciliationId && (
-                      <span className="block font-sans text-muted-foreground">
+                      <span className="block font-sans text-muted">
                         Exception {shortId(a.reconciliationId)}
                       </span>
                     )}
@@ -111,7 +111,7 @@ export default function AdjustmentsPage() {
                     {a.transactionId && (
                       <Link
                         href={`/dashboard/transactions/${a.transactionId}`}
-                        className="block text-xs text-primary hover:underline"
+                        className="block text-xs text-primary-soft hover:underline"
                       >
                         Transaction
                       </Link>
@@ -121,7 +121,7 @@ export default function AdjustmentsPage() {
                     {a.status === "PENDING_APPROVAL" ? (
                       <div className="flex flex-col items-start gap-2">
                         {own && (
-                          <span className="text-xs text-amber-800">
+                          <span className="text-xs text-warning">
                             You requested this. Another FINANCE admin must decide it
                             (four-eyes).
                           </span>
@@ -170,7 +170,7 @@ export default function AdjustmentsPage() {
                         </div>
                       </div>
                     ) : (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted">
                         {formatDateTime(a.decidedAt)} by {who(a.decidedById)}
                       </span>
                     )}

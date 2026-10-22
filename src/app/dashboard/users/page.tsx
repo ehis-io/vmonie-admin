@@ -32,7 +32,7 @@ function Results({ q }: { q: string }) {
       <ErrorBox error={res.error} />
       {!res.data && res.loading && <Loading />}
       {res.data && res.data.items.length === 0 && (
-        <Empty>No customers match.</Empty>
+        <Empty>No users match.</Empty>
       )}
       {res.data && res.data.items.length > 0 && (
         <Table head={["Name", "Phone", "Status", "Tier", "Accounts", "Joined"]}>
@@ -40,8 +40,8 @@ function Results({ q }: { q: string }) {
             <tr key={c.id}>
               <td>
                 <Link
-                  href={`/dashboard/customers/${c.id}`}
-                  className="text-primary hover:underline"
+                  href={`/dashboard/users/${c.id}`}
+                  className="font-medium text-foreground hover:text-primary-soft"
                 >
                   {[c.firstName, c.lastName].filter(Boolean).join(" ") ||
                     "(no name yet)"}
@@ -79,8 +79,8 @@ function Results({ q }: { q: string }) {
   );
 }
 
-function CustomersScreen() {
-  useDocumentTitle("Customers");
+function UsersScreen() {
+  useDocumentTitle("Users");
   const params = useSearchParams();
   const router = useRouter();
   const q = params.get("q") ?? "";
@@ -88,14 +88,14 @@ function CustomersScreen() {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push(`/dashboard/customers${qs({ q: draft.trim() })}`);
+    router.push(`/dashboard/users${qs({ q: draft.trim() })}`);
   };
 
   return (
     <>
       <PageHeader
-        title="Customers"
-        description="Search by phone number, name, full account number or customer id."
+        title="Users"
+        description="Everyone with a Vmonie account. Search by phone number, name, full account number or customer id."
       />
       <form onSubmit={submit} className="mb-4 flex max-w-xl items-end gap-2">
         <TextInput
@@ -103,9 +103,11 @@ function CustomersScreen() {
           placeholder="08031234567, Okafor, 9038042624…"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          aria-label="Search customers"
+          aria-label="Search users"
         />
-        <Button type="submit">Search</Button>
+        <Button type="submit" variant="secondary">
+          Search
+        </Button>
       </form>
       {/* Keyed by the query so paging restarts on a new search. */}
       <Results key={q} q={q} />
@@ -113,10 +115,10 @@ function CustomersScreen() {
   );
 }
 
-export default function CustomersPage() {
+export default function UsersPage() {
   return (
     <Suspense fallback={<Loading />}>
-      <CustomersScreen />
+      <UsersScreen />
     </Suspense>
   );
 }

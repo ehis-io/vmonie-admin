@@ -70,16 +70,16 @@ function AccountPicker({ onPick }: { onPick: (p: Picked) => void }) {
           <Empty>No customers match.</Empty>
         )}
         {res.data && !res.loading && res.data.items.length > 0 && (
-          <ul className="divide-y divide-border rounded-md border border-border">
+          <ul className="divide-y divide-border rounded-lg border border-surface-border">
             {res.data.items.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
                 <span>
                   {nameOf(c)}{" "}
-                  <span className="font-mono text-xs text-muted-foreground">{c.phoneNumber}</span>
+                  <span className="font-mono text-xs text-muted">{c.phoneNumber}</span>
                 </span>
                 <span className="flex flex-wrap gap-2">
                   {c.accounts.length === 0 && (
-                    <span className="text-xs text-muted-foreground">No account</span>
+                    <span className="text-xs text-muted">No account</span>
                   )}
                   {c.accounts.map((a) => (
                     <Button
@@ -157,16 +157,16 @@ function NewAdjustment() {
           <div>
             <Label>Account</Label>
             {picked ? (
-              <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted px-3 py-2 text-sm">
+              <div className="flex flex-wrap items-center gap-3 rounded-lg border border-surface-border bg-surface-raised px-3 py-2 text-sm">
                 <span>
                   {picked.customerName} ·{" "}
                   <span className="font-mono">{picked.accountNumber}</span>{" "}
-                  <span className="font-mono text-xs text-muted-foreground">({shortId(picked.accountId)})</span>
+                  <span className="font-mono text-xs text-muted">({shortId(picked.accountId)})</span>
                 </span>
                 <Link
-                  href={`/dashboard/customers/${picked.customerId}`}
+                  href={`/dashboard/users/${picked.customerId}`}
                   target="_blank"
-                  className="text-xs text-primary hover:underline"
+                  className="text-xs text-primary-soft hover:underline"
                 >
                   Open customer
                 </Link>
@@ -206,7 +206,7 @@ function NewAdjustment() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
-            <p className={`mt-1 text-xs ${amount && !parsed.ok ? "text-red-700" : "text-muted-foreground"}`}>
+            <p className={`mt-1 text-xs ${amount && !parsed.ok ? "text-danger" : "text-muted"}`}>
               {parsed.ok
                 ? `${formatKobo(parsed.kobo)} (${parsed.kobo} kobo)`
                 : amount
@@ -221,7 +221,7 @@ function NewAdjustment() {
               maxLength={500}
               onChange={(e) => setReason(e.target.value)}
             />
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-xs text-muted">
               At least 10 characters. Shown to the approver and kept in the audit log.
             </p>
           </div>
@@ -260,7 +260,7 @@ function NewAdjustment() {
             />
             <Link
               href="/dashboard/adjustments"
-              className="rounded-md border border-border px-3.5 py-2 text-sm hover:bg-muted"
+              className="rounded-lg border border-surface-border px-3.5 py-2 text-sm hover:bg-surface-raised"
             >
               Cancel
             </Link>

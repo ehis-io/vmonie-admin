@@ -77,7 +77,7 @@ function Exceptions({ status }: { status: "OPEN" | "RESOLVED" }) {
                 {r.transactionId ? (
                   <Link
                     href={`/dashboard/transactions/${r.transactionId}`}
-                    className="font-mono text-xs text-primary hover:underline"
+                    className="font-mono text-xs text-primary-soft hover:underline"
                   >
                     {shortId(r.transactionId)}
                   </Link>
@@ -94,7 +94,7 @@ function Exceptions({ status }: { status: "OPEN" | "RESOLVED" }) {
                 ) : (
                   <>
                     {r.resolution}
-                    <span className="block text-xs text-muted-foreground">
+                    <span className="block text-xs text-muted">
                       {formatDateTime(r.resolvedAt)} by {shortId(r.resolvedById)}
                     </span>
                   </>
@@ -107,13 +107,13 @@ function Exceptions({ status }: { status: "OPEN" | "RESOLVED" }) {
                       (canAdjust ? (
                         <Link
                           href={adjustmentHref(r)}
-                          className="whitespace-nowrap rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:bg-muted"
+                          className="whitespace-nowrap rounded-lg border border-surface-border px-2.5 py-1 text-xs font-medium hover:bg-surface-raised"
                         >
                           Assign via adjustment
                         </Link>
                       ) : (
                         <span
-                          className="text-xs text-muted-foreground"
+                          className="text-xs text-muted"
                           title="Requires the OPERATIONS or FINANCE role"
                         >
                           Assign via adjustment
@@ -213,8 +213,8 @@ export default function ReconciliationPage() {
             role="tab"
             aria-selected={tab === s}
             onClick={() => setTab(s)}
-            className={`rounded-md px-3 py-1.5 text-sm ${
-              tab === s ? "bg-primary text-white" : "border border-border bg-surface"
+            className={`rounded-lg px-3 py-1.5 text-sm ${
+              tab === s ? "bg-primary text-white" : "border border-surface-border bg-surface"
             }`}
           >
             {humanize(s)}

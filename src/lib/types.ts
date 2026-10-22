@@ -3,6 +3,7 @@
  * them (docs/API.md does not spell most of them out). Amounts are kobo
  * strings; dates are ISO strings.
  */
+import type { AdminRole } from "./api";
 
 export interface Page<T> {
   items: T[];
@@ -31,7 +32,25 @@ export const TRANSACTION_KINDS = [
   "TRANSFER_OUT",
   "REVERSAL",
   "ADJUSTMENT",
+  "BILL_PAYMENT",
 ] as const;
+
+/** What a BILL_PAYMENT bought. The token itself never reaches staff. */
+export interface BillInfo {
+  type: "AIRTIME" | "DATA" | "CABLE_TV" | "ELECTRICITY";
+  categoryId: string;
+  billerName: string;
+  productCode: string | null;
+  productName: string | null;
+  customerIdentifier: string;
+  customerName: string | null;
+  vendType: string | null;
+  address: string | null;
+  providerBillId: string | null;
+  providerFeeMinor: string | null;
+  vmonieFeeMinor: string | null;
+  hasToken: boolean;
+}
 
 export interface IntegrationHealth {
   webhooksLast24h: Record<string, number>;
@@ -79,6 +98,10 @@ export interface CustomerDetail {
   tier: number;
   pinFailures: number;
   pinLockedUntil: string | null;
+  /** Staff forced a PIN reset; cleared when the customer resets it. */
+  pinResetRequired?: boolean;
+  dutchmanCustomerId?: string | null;
+  dutchmanKycStatus?: string | null;
   termsVersion: string;
   privacyVersion: string;
   consentedAt: string;
@@ -98,6 +121,13 @@ export interface CustomerDetail {
     boundAt: string;
     revokedAt: string | null;
     lastSeenAt: string | null;
+    /** Live sign-ins on the device. */
+    sessions?: {
+      id: string;
+      createdAt: string;
+      lastRefreshedAt: string | null;
+      expiresAt: string;
+    }[];
   }[];
 }
 
@@ -117,6 +147,8 @@ export interface Transaction {
   counterpartyBank: string | null;
   counterpartyBankCode: string | null;
   counterpartyAccount: string | null;
+  /** Only on BILL_PAYMENT. */
+  bill?: BillInfo | null;
   providerCode: string;
   providerReference: string | null;
   originalId: string | null;
@@ -334,4 +366,132 @@ export interface ComplianceHold {
   releasedBy: string | null;
   releaseNote: string | null;
   customer: ComplianceCustomer;
+}
+
+// ─── Feature flags (GET /admin/features) ─────────────────────────────────
+
+export type FeatureStatus = "LIVE" | "COMING_SOON" | "OFF";
+
+export const FEATURE_STATUSES: FeatureStatus[] = ["LIVE", "COMING_SOON", "OFF"];
+
+/** What each state means for a customer, shown under the selector. */
+export const FEATURE_STATUS_HINTS: Record<FeatureStatus, string> = {
+  LIVE: "Customers can use it.",
+  COMING_SOON: "Shown as not launched yet. Requests are refused.",
+  OFF: "Paused. Requests are refused with the message below.",
+};
+
+export interface FeatureFlag {
+  key: string;
+  label: string;
+  status: FeatureStatus;
+  /** Only LIVE is usable. */
+  enabled: boolean;
+  message: string | null;
+  /** Admin id of whoever last changed it; null if never changed. */
+  updatedBy: string | null;
+  updatedByName: string | null;
+  updatedAt: string | null;
+}
+
+// ─── Fees (GET /admin/fees), read live from Dutchman Bridge ─────────────
+
+export interface FeeRule {
+  flow: string;
+  label: string;
+  /** ISO code, or `*` for every currency. */
+  currency: string;
+  feeBps: number;
+  /** Naira, decimal strings. */
+  feeFlat: string;
+  feeMin: string | null;
+  feeMax: string | null;
+  active: boolean;
+  /** False when Bridge holds no rule yet (charges nothing). */
+  configured: boolean;
+  updatedAt: string | null;
+  updatedByName: string | null;
+  lastReason: string | null;
+}
+
+export interface FeeEarning {
+  currency: string;
+  /** Decimal strings. */
+  amount: string;
+  held: string;
+}
+
+// ─── Admins (GET /admin/users) ───────────────────────────────────────────
+
+export interface AdminAccount {
+  id: string;
+  email: string;
+  name: string;
+  roles: AdminRole[];
+  active: boolean;
+  createdAt: string;
+  lastLoginAt: string | null;
+}
+
+// ─── KYC queue (GET /admin/kyc) ──────────────────────────────────────────
+
+export type KycQueueStatus =
+  | "MANUAL_REVIEW"
+  | "PENDING"
+  | "MISMATCH"
+  | "ERROR"
+  | "VERIFIED"
+  | "NONE";
+
+export const KYC_QUEUE_STATUSES: KycQueueStatus[] = [
+  "MANUAL_REVIEW",
+  "PENDING",
+  "MISMATCH",
+  "ERROR",
+  "NONE",
+  "VERIFIED",
+];
+
+export const KYC_QUEUE_HINTS: Record<KycQueueStatus, string> = {
+  MANUAL_REVIEW: "The provider could not decide: someone has to look at these.",
+  PENDING: "Checks sent and not answered yet.",
+  MISMATCH: "The registry answered, but the details did not match what the customer entered.",
+  ERROR: "The provider could not answer (outage or timeout). Safe to retry.",
+  NONE: "Signed up, no identity check yet.",
+  VERIFIED: "Identity verified.",
+};
+
+export interface KycQueueItem {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  phoneNumber: string;
+  status: string;
+  tier: number;
+  bridgeKycStatus: string | null;
+  createdAt: string;
+  kycStatus: KycQueueStatus;
+  latestCheck: { checkType: string; provider: string; at: string } | null;
+  waitingSince: string;
+}
+
+// ─── Overview (GET /admin/stats) ─────────────────────────────────────────
+
+export interface OverviewStats {
+  customers: {
+    total: number;
+    byStatus: Record<string, number>;
+    byTier: Record<string, number>;
+    newLast7Days: number;
+  };
+  accounts: { open: number; openedToday: number };
+  today: {
+    since: string;
+    deposits: { count: number; volumeMinor: string };
+    transfers: { count: number; volumeMinor: string; feesMinor: string; failed: number };
+  };
+  pendingTransfers: number;
+  transfersNeedingReview: number;
+  openComplianceHolds: number;
+  openSupportCases: number;
 }

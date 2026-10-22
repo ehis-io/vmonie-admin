@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api, qs } from "../../../../lib/api";
 import { useCan } from "../../../../lib/access";
-import { formatDateTime, humanize } from "../../../../lib/format";
+import { age, formatDateTime, humanize } from "../../../../lib/format";
 import { formatKobo } from "../../../../lib/money";
 import { useDocumentTitle } from "../../../../lib/useDocumentTitle";
 import { useResource } from "../../../../lib/useResource";
@@ -14,6 +14,8 @@ import type {
   AmlScreening,
   ComplianceHold,
   CustomerDetail,
+  Page,
+  Transaction,
 } from "../../../../lib/types";
 import { ConfirmAction } from "../../../../components/ConfirmAction";
 import {
@@ -24,6 +26,7 @@ import {
   Json,
   KeyValues,
   Loading,
+  Notice,
   PageHeader,
   Table,
 } from "../../../../components/ui";
@@ -40,7 +43,7 @@ function AccountNumber({ account }: { account: Account }) {
       {revealed ? (
         <button
           type="button"
-          className="text-xs text-primary hover:underline"
+          className="text-xs text-primary-soft hover:underline"
           onClick={() => setRevealed(null)}
         >
           Hide
@@ -80,6 +83,9 @@ export default function CustomerDetailPage() {
   const screenings = useResource<AmlScreening[]>(
     compliance ? `/admin/compliance/screenings${qs({ customerId: id })}` : null,
   );
+  const recent = useResource<Page<Transaction>>(
+    `/admin/transactions${qs({ customerId: id, limit: "10" })}`,
+  );
   const reloadCompliance = () => {
     holds.reload();
     screenings.reload();
@@ -109,7 +115,7 @@ export default function CustomerDetailPage() {
           <>
             <Link
               href={`/dashboard/transactions?customerId=${c.id}`}
-              className="rounded-md border border-border bg-surface px-2.5 py-1 text-xs font-medium hover:bg-muted"
+              className="rounded-lg border border-surface-border bg-surface px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary/60 hover:bg-surface-raised"
             >
               Transactions
             </Link>
@@ -163,6 +169,20 @@ export default function CustomerDetailPage() {
               onDone={reloadCompliance}
             />
             <ConfirmAction
+              label="Reset PIN"
+              permission="customerSecurity"
+              danger
+              disabledReason={c.pinResetRequired ? "A PIN reset is already pending" : undefined}
+              title="Force a PIN reset"
+              description="The current PIN stops working at once and every session ends. The customer sets a new PIN with “Forgot PIN” (OTP) on their registered phone. You never see or choose the PIN."
+              textField={REASON}
+              confirmLabel="Reset PIN"
+              onConfirm={({ text }) =>
+                api.post(`/admin/customers/${c.id}/reset-pin`, { reason: text })
+              }
+              onDone={res.reload}
+            />
+            <ConfirmAction
               label="Retry account opening"
               permission="retryAccountOpening"
               disabledReason={
@@ -180,6 +200,14 @@ export default function CustomerDetailPage() {
         }
       />
       <ErrorBox error={res.error} />
+      {c.pinResetRequired && (
+        <div className="mb-4">
+          <Notice>
+            PIN reset pending: the customer cannot sign in or send money until they set a new
+            PIN with “Forgot PIN” on their registered phone.
+          </Notice>
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Profile">
@@ -191,6 +219,8 @@ export default function CustomerDetailPage() {
               ["Email", c.email],
               ["Date of birth", c.dateOfBirth?.slice(0, 10)],
               ["PIN failures", c.pinFailures],
+              ["PIN reset required", c.pinResetRequired ? "Yes" : "No"],
+              ["Bridge KYC", c.dutchmanKycStatus ? <Badge key="b">{c.dutchmanKycStatus}</Badge> : "—"],
               ["PIN locked until", c.pinLockedUntil ? formatDateTime(c.pinLockedUntil) : "—"],
               ["Consents", `Terms ${c.termsVersion}, privacy ${c.privacyVersion} (${formatDateTime(c.consentedAt)})`],
               ["Joined", formatDateTime(c.createdAt)],
@@ -232,7 +262,7 @@ export default function CustomerDetailPage() {
               <tr key={a.id}>
                 <td>
                   <AccountNumber account={a} />
-                  <span className="block text-xs text-muted-foreground">
+                  <span className="block text-xs text-muted">
                     {a.accountName}
                   </span>
                 </td>
@@ -246,7 +276,7 @@ export default function CustomerDetailPage() {
                 <td className="text-xs">
                   {a.attempts} attempt{a.attempts === 1 ? "" : "s"}
                   {a.lastError && (
-                    <span className="block text-red-700">{a.lastError}</span>
+                    <span className="block text-danger">{a.lastError}</span>
                   )}
                 </td>
                 <td>
@@ -291,18 +321,18 @@ export default function CustomerDetailPage() {
           actions={
             <Link
               href="/dashboard/compliance"
-              className="text-xs text-primary hover:underline"
+              className="text-xs text-primary-soft hover:underline"
             >
               Compliance console
             </Link>
           }
         >
           <ErrorBox error={holds.error ?? screenings.error} />
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted">
             Open holds
           </p>
           {holds.data && holds.data.length === 0 && (
-            <p className="mb-4 text-sm text-muted-foreground">None. Transfers are not held.</p>
+            <p className="mb-4 text-sm text-muted">None. Transfers are not held.</p>
           )}
           {holds.data && holds.data.length > 0 && (
             <ul className="mb-4 space-y-2 text-sm">
@@ -311,7 +341,7 @@ export default function CustomerDetailPage() {
                   <span>
                     <Badge tone="red">{humanize(h.source)}</Badge>{" "}
                     {h.reason}
-                    <span className="block text-xs text-muted-foreground">
+                    <span className="block text-xs text-muted">
                       Since {formatDateTime(h.createdAt)}
                     </span>
                   </span>
@@ -332,11 +362,11 @@ export default function CustomerDetailPage() {
               ))}
             </ul>
           )}
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted">
             Screenings
           </p>
           {screenings.data && screenings.data.length === 0 && (
-            <p className="text-sm text-muted-foreground">Not screened yet.</p>
+            <p className="text-sm text-muted">Not screened yet.</p>
           )}
           {screenings.data && screenings.data.length > 0 && (
             <Table head={["When", "Result", "Review", "Note"]}>
@@ -344,7 +374,7 @@ export default function CustomerDetailPage() {
                 <tr key={s.id}>
                   <td className="whitespace-nowrap">
                     {formatDateTime(s.createdAt)}
-                    <span className="block text-xs text-muted-foreground">{humanize(s.trigger)}</span>
+                    <span className="block text-xs text-muted">{humanize(s.trigger)}</span>
                   </td>
                   <td>
                     <Badge>{s.status}</Badge>
@@ -352,7 +382,7 @@ export default function CustomerDetailPage() {
                   <td>
                     {s.status === "POTENTIAL_MATCH" ? <Badge>{s.reviewStatus}</Badge> : "—"}
                   </td>
-                  <td className="max-w-xs text-xs text-muted-foreground">
+                  <td className="max-w-xs text-xs text-muted">
                     {s.reviewNote ?? s.error ?? ""}
                   </td>
                 </tr>
@@ -362,25 +392,127 @@ export default function CustomerDetailPage() {
         </Card>
       )}
 
-      <Card title="Devices" className="mt-4">
+      <Card
+        title="Recent transactions"
+        className="mt-4"
+        actions={
+          <Link
+            href={`/dashboard/transactions?customerId=${c.id}`}
+            className="text-xs font-semibold text-primary-soft hover:underline"
+          >
+            View all
+          </Link>
+        }
+      >
+        <ErrorBox error={recent.error} />
+        {!recent.data && recent.loading && <Loading />}
+        {recent.data && recent.data.items.length === 0 && (
+          <Empty>No transactions yet.</Empty>
+        )}
+        {recent.data && recent.data.items.length > 0 && (
+          <Table head={["Reference", "Kind", "Status", "Amount", "Counterparty", "When"]}>
+            {recent.data.items.map((t) => (
+              <tr key={t.id}>
+                <td>
+                  <Link
+                    href={`/dashboard/transactions/${t.id}`}
+                    className="font-mono text-xs text-primary-soft hover:underline"
+                  >
+                    {t.reference}
+                  </Link>
+                </td>
+                <td className="whitespace-nowrap">
+                  {humanize(t.kind)}
+                  <span className="block text-xs text-muted">{t.direction}</span>
+                </td>
+                <td>
+                  <Badge>{t.status}</Badge>
+                </td>
+                <td className="whitespace-nowrap tabular-nums">
+                  {formatKobo(t.amountMinor)}
+                </td>
+                <td>
+                  {t.counterpartyName ?? "—"}
+                  <span className="block text-xs text-muted">
+                    {t.counterpartyBank} {t.counterpartyAccount}
+                  </span>
+                </td>
+                <td className="whitespace-nowrap">{formatDateTime(t.createdAt)}</td>
+              </tr>
+            ))}
+          </Table>
+        )}
+      </Card>
+
+      <Card
+        title="Devices and sessions"
+        className="mt-4"
+        actions={
+          <ConfirmAction
+            label="Sign out everywhere"
+            permission="customerSecurity"
+            danger
+            title="Sign this customer out everywhere"
+            description="Ends every session. Their devices stay registered, so they sign in again with their PIN."
+            textField={REASON}
+            confirmLabel="Sign out"
+            onConfirm={({ text }) =>
+              api.post(`/admin/customers/${c.id}/sessions/revoke`, { reason: text })
+            }
+            onDone={res.reload}
+          />
+        }
+      >
         {c.devices.length === 0 ? (
           <Empty>No devices.</Empty>
         ) : (
-          <Table head={["Name", "Bound", "Last seen", "State"]}>
-            {c.devices.map((d) => (
-              <tr key={d.id}>
-                <td>{d.name ?? "(unnamed)"}</td>
-                <td>{formatDateTime(d.boundAt)}</td>
-                <td>{formatDateTime(d.lastSeenAt)}</td>
-                <td>
-                  {d.revokedAt ? (
-                    <Badge tone="gray">Revoked {formatDateTime(d.revokedAt)}</Badge>
-                  ) : (
-                    <Badge tone="green">{humanize("ACTIVE")}</Badge>
-                  )}
-                </td>
-              </tr>
-            ))}
+          <Table head={["Name", "Bound", "Last seen", "Sessions", "State", ""]}>
+            {c.devices.map((d) => {
+              const live = d.sessions ?? [];
+              return (
+                <tr key={d.id}>
+                  <td>{d.name ?? "(unnamed)"}</td>
+                  <td className="whitespace-nowrap">{formatDateTime(d.boundAt)}</td>
+                  <td className="whitespace-nowrap">{formatDateTime(d.lastSeenAt)}</td>
+                  <td className="text-xs">
+                    {live.length === 0
+                      ? "None"
+                      : live.map((s) => (
+                          <span key={s.id} className="block whitespace-nowrap">
+                            Since {formatDateTime(s.createdAt)}
+                            {s.lastRefreshedAt && (
+                              <span className="text-muted"> · active {age(s.lastRefreshedAt)}</span>
+                            )}
+                          </span>
+                        ))}
+                  </td>
+                  <td>
+                    {d.revokedAt ? (
+                      <Badge tone="gray">Revoked {formatDateTime(d.revokedAt)}</Badge>
+                    ) : (
+                      <Badge tone="green">{humanize("ACTIVE")}</Badge>
+                    )}
+                  </td>
+                  <td className="text-right">
+                    {!d.revokedAt && (
+                      <ConfirmAction
+                        label="Revoke"
+                        permission="customerSecurity"
+                        danger
+                        title={`Revoke ${d.name ?? "this device"}`}
+                        description="Signs the device out at once. Using it again needs an OTP device change."
+                        textField={REASON}
+                        confirmLabel="Revoke"
+                        onConfirm={({ text }) =>
+                          api.post(`/admin/devices/${d.id}/revoke`, { reason: text })
+                        }
+                        onDone={res.reload}
+                      />
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </Table>
         )}
       </Card>

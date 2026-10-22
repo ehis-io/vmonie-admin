@@ -32,7 +32,8 @@ export default function TransactionDetailPage() {
 
   if (!t) return res.error ? <ErrorBox error={res.error} /> : <Loading />;
 
-  const isTransfer = t.kind === "TRANSFER_OUT";
+  // Bills settle like transfers: requery and hand-resolution apply to both.
+  const isTransfer = t.kind === "TRANSFER_OUT" || t.kind === "BILL_PAYMENT";
   const total = (BigInt(t.amountMinor) + BigInt(t.feeMinor)).toString();
 
   return (
@@ -117,8 +118,8 @@ export default function TransactionDetailPage() {
                 t.customerId ? (
                   <Link
                     key="c"
-                    href={`/dashboard/customers/${t.customerId}`}
-                    className="font-mono text-xs text-primary hover:underline"
+                    href={`/dashboard/users/${t.customerId}`}
+                    className="font-mono text-xs text-primary-soft hover:underline"
                   >
                     {t.customerId}
                   </Link>
@@ -133,7 +134,7 @@ export default function TransactionDetailPage() {
                   <Link
                     key="o"
                     href={`/dashboard/transactions/${t.originalId}`}
-                    className="text-primary hover:underline"
+                    className="text-primary-soft hover:underline"
                   >
                     {t.originalId}
                   </Link>
@@ -147,6 +148,29 @@ export default function TransactionDetailPage() {
             ]}
           />
         </Card>
+        {t.bill ? (
+          <Card title="Bill">
+            <KeyValues
+              rows={[
+                ["Type", humanize(t.bill.type)],
+                ["Biller", `${t.bill.billerName} (${t.bill.categoryId})`],
+                ["Plan", t.bill.productName ?? "—"],
+                ["Phone / smartcard / meter", <span key="i" className="font-mono">{t.bill.customerIdentifier}</span>],
+                ["Holder", t.bill.customerName ?? "—"],
+                ["Meter type", t.bill.vendType ?? "—"],
+                ["Address", t.bill.address ?? "—"],
+                ["Provider bill id", <span key="b" className="font-mono text-xs">{t.bill.providerBillId ?? "—"}</span>],
+                [
+                  "Fee split",
+                  t.bill.providerFeeMinor !== null && t.bill.vmonieFeeMinor !== null
+                    ? `${formatKobo(t.bill.providerFeeMinor)} provider · ${formatKobo(t.bill.vmonieFeeMinor)} Vmonie`
+                    : "—",
+                ],
+                ["Token", t.bill.hasToken ? "Issued (shown to the customer only)" : "—"],
+              ]}
+            />
+          </Card>
+        ) : null}
         <Card title="Counterparty and provider">
           <KeyValues
             rows={[
@@ -171,7 +195,7 @@ export default function TransactionDetailPage() {
         ) : (
           <ol className="space-y-3">
             {t.events.map((e) => (
-              <li key={e.id} className="border-l-2 border-border pl-3">
+              <li key={e.id} className="border-l-2 border-surface-border pl-3">
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   {e.fromStatus && (
                     <>
@@ -180,7 +204,7 @@ export default function TransactionDetailPage() {
                     </>
                   )}
                   <Badge>{e.toStatus}</Badge>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted">
                     via {e.source} · {formatDateTime(e.createdAt)}
                   </span>
                 </div>
@@ -203,7 +227,7 @@ export default function TransactionDetailPage() {
             {t.journals.map((j) => (
               <div key={j.id}>
                 <p className="text-sm font-medium">{j.description}</p>
-                <p className="mb-1 text-xs text-muted-foreground">
+                <p className="mb-1 text-xs text-muted">
                   <span className="font-mono">{j.idempotencyKey}</span> ·{" "}
                   {formatDateTime(j.createdAt)}
                 </p>

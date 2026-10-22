@@ -9,7 +9,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { template: "%s · Vmonie Ops", default: "Vmonie Ops" },
+  title: { template: "%s · Vmonie Admin", default: "Vmonie Admin" },
   description: "Operations console for Vmonie Personal.",
   robots: { index: false, follow: false },
 };

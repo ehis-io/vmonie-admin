@@ -46,7 +46,7 @@ function List({ status }: { status: string }) {
               </td>
               <td className="tabular-nums">{w.attempts}</td>
               <td className="whitespace-nowrap">{formatDateTime(w.processedAt)}</td>
-              <td className="max-w-xs text-xs text-red-700">{w.lastError ?? ""}</td>
+              <td className="max-w-xs text-xs text-danger">{w.lastError ?? ""}</td>
             </tr>
           ))}
         </Table>

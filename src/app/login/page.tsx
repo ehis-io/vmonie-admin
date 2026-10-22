@@ -10,6 +10,7 @@ import {
 } from "../../lib/api";
 import { resetAdminCache } from "../../lib/access";
 import { useDocumentTitle } from "../../lib/useDocumentTitle";
+import { VmonieMark } from "../../components/Brand";
 import { Button, ErrorBox, Notice, TextInput } from "../../components/ui";
 
 interface LoginResponse {
@@ -48,15 +49,24 @@ function LoginForm() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
+    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <form
         onSubmit={submit}
-        className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-surface p-6 shadow-sm"
+        noValidate
+        className="card fade-in w-full max-w-md space-y-5 p-8 sm:p-10"
       >
-        <div>
-          <h1 className="text-lg font-semibold">Vmonie Ops</h1>
-          <p className="text-sm text-muted-foreground">
-            Operations console. Staff only; every action is audited.
+        <div className="mb-8 text-center">
+          <div className="mb-4 flex justify-center">
+            <VmonieMark size={48} />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Vmonie Admin
+          </h1>
+          <p className="mt-1 text-xs font-bold uppercase tracking-widest text-muted">
+            Operations console
+          </p>
+          <p className="mt-3 text-xs text-muted">
+            Staff only. Every action is audited.
           </p>
         </div>
         {expired && !error && (
@@ -66,6 +76,7 @@ function LoginForm() {
         <TextInput
           label="Email"
           type="email"
+          placeholder="you@vmonie.com"
           autoComplete="username"
           required
           value={email}
@@ -74,6 +85,7 @@ function LoginForm() {
         <TextInput
           label="Password"
           type="password"
+          placeholder="••••••••"
           autoComplete="current-password"
           required
           value={password}

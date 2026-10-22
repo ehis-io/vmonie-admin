@@ -50,8 +50,8 @@ const list = (v: string | string[] | undefined) =>
 function CustomerLink({ customer }: { customer: ComplianceCustomer }) {
   return (
     <Link
-      href={`/dashboard/customers/${customer.id}`}
-      className="font-medium text-primary hover:underline"
+      href={`/dashboard/users/${customer.id}`}
+      className="font-medium text-primary-soft hover:underline"
     >
       {customerName(customer)}
     </Link>
@@ -62,7 +62,7 @@ function CustomerLink({ customer }: { customer: ComplianceCustomer }) {
 function Hits({ hits }: { hits: ScreeningHit[] | null }) {
   if (!hits || hits.length === 0) {
     return (
-      <span className="text-xs text-muted-foreground">
+      <span className="text-xs text-muted">
         The provider gave no detail. Treat it as unresolved.
       </span>
     );
@@ -84,7 +84,7 @@ function Hits({ hits }: { hits: ScreeningHit[] | null }) {
         </li>
       ))}
       {hits.length > 8 && (
-        <li className="text-muted-foreground">and {hits.length - 8} more</li>
+        <li className="text-muted">and {hits.length - 8} more</li>
       )}
     </ul>
   );
@@ -94,11 +94,11 @@ function Tile({ label, value, alarm }: { label: string; value: number | undefine
   return (
     <div
       className={`rounded-lg border px-4 py-3 ${
-        alarm && value ? "border-red-200 bg-red-50" : "border-border bg-surface"
+        alarm && value ? "border-danger/30 bg-danger/10" : "border-surface-border bg-surface"
       }`}
     >
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`mt-1 text-2xl font-semibold tabular-nums ${alarm && value ? "text-red-700" : ""}`}>
+      <p className="text-xs text-muted">{label}</p>
+      <p className={`mt-1 text-2xl font-semibold tabular-nums ${alarm && value ? "text-danger" : ""}`}>
         {value ?? "—"}
       </p>
     </div>
@@ -161,8 +161,8 @@ export default function CompliancePage() {
             role="tab"
             aria-selected={tab === t.key}
             onClick={() => setTab(t.key)}
-            className={`rounded-md px-3 py-1.5 text-sm ${
-              tab === t.key ? "bg-primary text-white" : "border border-border bg-surface"
+            className={`rounded-lg px-3 py-1.5 text-sm ${
+              tab === t.key ? "bg-primary text-white" : "border border-surface-border bg-surface"
             }`}
           >
             {t.label}
@@ -181,11 +181,11 @@ export default function CompliancePage() {
                 <tr key={s.id}>
                   <td className="whitespace-nowrap">
                     {formatDateTime(s.createdAt)}
-                    <span className="block text-xs text-muted-foreground">{humanize(s.trigger)}</span>
+                    <span className="block text-xs text-muted">{humanize(s.trigger)}</span>
                   </td>
                   <td>
                     <CustomerLink customer={s.customer} />
-                    <span className="block text-xs text-muted-foreground">
+                    <span className="block text-xs text-muted">
                       Screened as {s.subjectName}
                     </span>
                   </td>
@@ -194,7 +194,7 @@ export default function CompliancePage() {
                   </td>
                   <td className="whitespace-nowrap">
                     <Badge tone="red">{s.matchStatus ?? "Unclear"}</Badge>
-                    <span className="block text-xs text-muted-foreground">
+                    <span className="block text-xs text-muted">
                       Risk {s.riskLevel ?? "—"}
                     </span>
                   </td>
@@ -263,7 +263,7 @@ export default function CompliancePage() {
                   <td>
                     <Badge>{humanize(h.source)}</Badge>
                     {h.createdBy && (
-                      <span className="block text-xs text-muted-foreground">
+                      <span className="block text-xs text-muted">
                         by {shortId(h.createdBy)}
                       </span>
                     )}
@@ -303,7 +303,7 @@ export default function CompliancePage() {
                   key={f || "all"}
                   onClick={() => setStatusFilter(f)}
                   className={`rounded px-2 py-1 text-xs ${
-                    statusFilter === f ? "bg-primary text-white" : "border border-border"
+                    statusFilter === f ? "bg-primary text-white" : "border border-surface-border"
                   }`}
                 >
                   {f ? humanize(f) : "All"}
@@ -322,7 +322,7 @@ export default function CompliancePage() {
                 <tr key={s.id}>
                   <td className="whitespace-nowrap">
                     {formatDateTime(s.createdAt)}
-                    <span className="block text-xs text-muted-foreground">{humanize(s.trigger)}</span>
+                    <span className="block text-xs text-muted">{humanize(s.trigger)}</span>
                   </td>
                   <td>
                     <CustomerLink customer={s.customer} />
@@ -330,7 +330,7 @@ export default function CompliancePage() {
                   <td>
                     <Badge>{s.status}</Badge>
                     {s.error && (
-                      <span className="block max-w-xs text-xs text-muted-foreground">{s.error}</span>
+                      <span className="block max-w-xs text-xs text-muted">{s.error}</span>
                     )}
                   </td>
                   <td>
@@ -338,13 +338,13 @@ export default function CompliancePage() {
                       <>
                         <Badge>{s.reviewStatus}</Badge>
                         {s.reviewNote && (
-                          <span className="block max-w-xs text-xs text-muted-foreground">
+                          <span className="block max-w-xs text-xs text-muted">
                             {s.reviewNote}
                           </span>
                         )}
                       </>
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-xs text-muted">—</span>
                     )}
                   </td>
                   <td className="text-xs">{s.provider}</td>

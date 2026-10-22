@@ -116,7 +116,7 @@ export function ConfirmAction(props: ConfirmActionProps) {
       {open &&
         createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           onMouseDown={(e) => e.target === e.currentTarget && close()}
         >
           <form
@@ -125,13 +125,13 @@ export function ConfirmAction(props: ConfirmActionProps) {
             aria-labelledby={`${id}-title`}
             onSubmit={submit}
             onKeyDown={(e) => e.key === "Escape" && close()}
-            className="w-full max-w-md space-y-4 rounded-lg border border-border bg-surface p-5 shadow-xl"
+            className="card w-full max-w-md space-y-4 p-6 shadow-2xl"
           >
-            <h2 id={`${id}-title`} className="text-base font-semibold">
+            <h2 id={`${id}-title`} className="text-base font-semibold text-foreground">
               {props.title}
             </h2>
             {props.description && (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted">
                 {props.description}
               </div>
             )}
@@ -159,7 +159,7 @@ export function ConfirmAction(props: ConfirmActionProps) {
                   autoFocus
                 />
                 {min > 0 && (
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-1 text-xs text-muted">
                     {trimmed.length < min
                       ? `At least ${min} characters (${trimmed.length} so far). This is recorded in the audit log.`
                       : "Recorded in the audit log."}
@@ -170,7 +170,7 @@ export function ConfirmAction(props: ConfirmActionProps) {
             {error && (
               <p
                 role="alert"
-                className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+                className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger"
               >
                 {error}
               </p>

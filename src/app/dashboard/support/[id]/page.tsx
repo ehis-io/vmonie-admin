@@ -77,7 +77,7 @@ function Composer({
         rows={4}
         disabled={busy || !allowed}
         onChange={(e) => setMessage(e.target.value)}
-        className={internal ? "[&_textarea]:bg-amber-50" : ""}
+        className={internal ? "[&_textarea]:bg-warning/10" : ""}
       />
       <ErrorBox error={error} />
       {internal ? (
@@ -99,7 +99,7 @@ function Composer({
           disabledReason={message.trim() ? undefined : "Write a message first"}
           title="Send reply to the customer"
           description={
-            <span className="block whitespace-pre-wrap rounded bg-muted p-2 text-foreground">
+            <span className="block whitespace-pre-wrap rounded bg-surface-raised p-2 text-foreground">
               {message.trim()}
             </span>
           }
@@ -175,7 +175,7 @@ export default function SupportCasePage() {
             <ol className="space-y-3">
               {c.events.map((e) => {
                 const statusChange = e.toStatus && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted">
                     Status {e.fromStatus ? humanize(e.fromStatus) : "—"} →{" "}
                     <strong>{humanize(e.toStatus)}</strong>
                   </p>
@@ -183,15 +183,15 @@ export default function SupportCasePage() {
                 return (
                   <li
                     key={e.id}
-                    className={`rounded-md border p-3 ${
+                    className={`rounded-lg border p-3 ${
                       e.internal
-                        ? "border-amber-300 bg-amber-50"
+                        ? "border-warning/30 bg-warning/10"
                         : e.actorType === "CUSTOMER"
-                          ? "border-border bg-surface"
+                          ? "border-surface-border bg-surface"
                           : "border-teal-200 bg-teal-50"
                     }`}
                   >
-                    <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-muted">
                       <span className="font-semibold text-foreground">
                         {e.actorType === "CUSTOMER"
                           ? customerName
@@ -224,8 +224,8 @@ export default function SupportCasePage() {
                   "Customer",
                   <Link
                     key="c"
-                    href={`/dashboard/customers/${c.customerId}`}
-                    className="text-primary hover:underline"
+                    href={`/dashboard/users/${c.customerId}`}
+                    className="text-primary-soft hover:underline"
                   >
                     {customerName}
                   </Link>,
@@ -237,7 +237,7 @@ export default function SupportCasePage() {
                     <Link
                       key="t"
                       href={`/dashboard/transactions/${c.transactionId}`}
-                      className="text-primary hover:underline"
+                      className="text-primary-soft hover:underline"
                     >
                       {shortId(c.transactionId)}
                     </Link>
@@ -251,7 +251,7 @@ export default function SupportCasePage() {
             />
             {c.details !== null && c.details !== undefined && (
               <div className="mt-3">
-                <p className="mb-1 text-xs uppercase text-muted-foreground">Customer details</p>
+                <p className="mb-1 text-xs uppercase text-muted">Customer details</p>
                 <Json value={c.details} />
               </div>
             )}

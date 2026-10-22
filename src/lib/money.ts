@@ -61,3 +61,15 @@ export function parseNairaToKobo(input: string): ParsedAmount {
   if (s.length > 16) return { ok: false, error: "Amount is too large" };
   return { ok: true, kobo: s };
 }
+
+/**
+ * A naira decimal string as Bridge sends it (`"1200.5"`) → `"₦1,200.50"`.
+ * String arithmetic only. Null → `"—"`.
+ */
+export function formatNairaDecimal(value: string | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "—";
+  const m = /^(-?)(\d+)(?:\.(\d+))?$/.exec(value.trim());
+  if (!m) return value;
+  const kobo = ((m[3] ?? "") + "00").slice(0, 2);
+  return `${m[1]}₦${groupThousands(m[2].replace(/^0+(?=\d)/, ""))}.${kobo}`;
+}

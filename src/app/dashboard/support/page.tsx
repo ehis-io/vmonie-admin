@@ -40,7 +40,7 @@ function Queue({ status }: { status: string }) {
               <td>
                 <Link
                   href={`/dashboard/support/${c.id}`}
-                  className="font-mono text-xs text-primary hover:underline"
+                  className="font-mono text-xs text-primary-soft hover:underline"
                 >
                   {c.reference}
                 </Link>
@@ -49,7 +49,7 @@ function Queue({ status }: { status: string }) {
               <td className="whitespace-nowrap">{humanize(c.type)}</td>
               <td>
                 {[c.customer.firstName, c.customer.lastName].filter(Boolean).join(" ") || "—"}
-                <span className="block font-mono text-xs text-muted-foreground">
+                <span className="block font-mono text-xs text-muted">
                   {c.customer.phoneNumber}
                 </span>
               </td>
