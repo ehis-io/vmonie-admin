@@ -42,6 +42,41 @@ export function formatMinor(
   return formatted.replace("₦", `${code} `);
 }
 
+const UNITS: [bigint, string][] = [
+  [1_000_000_000n, "bn"],
+  [1_000_000n, "m"],
+  [1_000n, "k"],
+];
+
+/**
+ * An amount in minor units, shortened for a tile or summary line:
+ * `"420000000"` NGN → `"₦4.2m"`, GHS → `"GHS 4.2m"`. Under a thousand it is
+ * shown in full. BigInt only; rounds down to one decimal.
+ */
+export function formatMinorCompact(
+  minor: string | bigint | null | undefined,
+  currency: string | null | undefined,
+): string {
+  if (minor === null || minor === undefined || minor === "") return "—";
+  let value: bigint;
+  try {
+    value = typeof minor === "bigint" ? minor : BigInt(minor);
+  } catch {
+    return String(minor);
+  }
+  const negative = value < 0n;
+  const abs = negative ? -value : value;
+  const major = abs / 100n;
+  const unit = UNITS.find(([size]) => major >= size);
+  if (!unit) return formatMinor(value, currency);
+  const tenths = (abs * 10n) / (unit[0] * 100n);
+  const whole = groupThousands((tenths / 10n).toString());
+  const decimal = tenths % 10n === 0n ? "" : `.${tenths % 10n}`;
+  const code = (currency ?? "NGN").toUpperCase();
+  const symbol = code === "NGN" ? "₦" : `${code} `;
+  return `${negative ? "-" : ""}${symbol}${whole}${decimal}${unit[1]}`;
+}
+
 /** `"150050"` → `"1500.50"`, for pre-filling a naira input. */
 export function koboToNairaInput(minor: string | null | undefined): string {
   if (!minor || !/^-?\d+$/.test(minor)) return "";

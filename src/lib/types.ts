@@ -33,7 +33,70 @@ export const TRANSACTION_KINDS = [
   "REVERSAL",
   "ADJUSTMENT",
   "BILL_PAYMENT",
+  "P2P_OUT",
+  "P2P_IN",
 ] as const;
+export type TransactionKind = (typeof TRANSACTION_KINDS)[number];
+
+/** Short names for each kind, for totals and charts. */
+export const KIND_LABELS: Record<TransactionKind, string> = {
+  DEPOSIT: "Deposits",
+  TRANSFER_OUT: "Bank transfers",
+  REVERSAL: "Reversal refunds",
+  ADJUSTMENT: "Adjustments",
+  BILL_PAYMENT: "Bills",
+  P2P_OUT: "Vmonie sent",
+  P2P_IN: "Vmonie received",
+};
+
+/** Totals for the transaction list's applied filters (first page only). */
+export interface TransactionListTotals {
+  /** Every row the filters match. */
+  count: number;
+  /** SUCCESSFUL rows' amount per currency, in minor units. */
+  completedAmountMinor: Record<string, string>;
+}
+
+export interface TransactionPage extends Page<Transaction> {
+  /** Null on later pages; absent from an older server. */
+  totals?: TransactionListTotals | null;
+}
+
+/**
+ * GET /admin/transactions/summary. Completed = SUCCESSFUL, failed = FAILED,
+ * reversed = REVERSED (went through, later undone; never also completed or
+ * failed), pending = still in flight, total = all of them. REVERSAL refund
+ * rows are left out so a reversed payment counts once. Days are Lagos days.
+ */
+export interface SummaryPoint {
+  date: string;
+  completed: number;
+  failed: number;
+  reversed: number;
+  total: number;
+}
+
+export interface SummaryTotals {
+  counts: {
+    completed: number;
+    failed: number;
+    reversed: number;
+    pending: number;
+    total: number;
+  };
+  /** Completed amount per currency, in minor units. */
+  completedAmountMinor: Record<string, string>;
+  /** Completed count per kind. */
+  completedByKind: Partial<Record<TransactionKind, number>>;
+}
+
+export interface TransactionSummary {
+  days: number;
+  timeZone: string;
+  from: string;
+  series: SummaryPoint[];
+  totals: { window: SummaryTotals; allTime: SummaryTotals };
+}
 
 /** What a BILL_PAYMENT bought. The token itself never reaches staff. */
 export interface BillInfo {

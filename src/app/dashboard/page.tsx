@@ -4,9 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import { useDocumentTitle } from "../../lib/useDocumentTitle";
 import { useResource } from "../../lib/useResource";
-import { formatKobo } from "../../lib/money";
+import { formatKobo, formatMinor, formatMinorCompact } from "../../lib/money";
 import { age, formatDateTime, humanize, maskAccount } from "../../lib/format";
-import type { IntegrationHealth, OverviewStats, Transaction } from "../../lib/types";
+import {
+  KIND_LABELS,
+  TRANSACTION_KINDS,
+  type IntegrationHealth,
+  type OverviewStats,
+  type SummaryTotals,
+  type Transaction,
+  type TransactionSummary,
+} from "../../lib/types";
+import { TransactionsChart } from "../../components/TransactionsChart";
 import {
   Badge,
   Button,
@@ -161,6 +170,147 @@ function Stats() {
   );
 }
 
+const WINDOWS = ["7", "30", "90"] as const;
+type Window = (typeof WINDOWS)[number];
+
+/** Completed amount per currency, each in its own currency, never added. */
+function Amounts({ amounts }: { amounts: Record<string, string> }) {
+  const entries = Object.entries(amounts).filter(([, v]) => v !== "0");
+  if (!entries.length) return <>—</>;
+  return (
+    <>
+      {entries.map(([currency, minor], i) => (
+        <span key={currency} title={formatMinor(minor, currency)}>
+          {i > 0 && " · "}
+          {formatMinorCompact(minor, currency)}
+        </span>
+      ))}
+    </>
+  );
+}
+
+function ByKind({
+  window,
+  allTime,
+  days,
+}: {
+  window: SummaryTotals;
+  allTime: SummaryTotals;
+  days: string;
+}) {
+  const kinds = TRANSACTION_KINDS.filter(
+    (k) => k in allTime.completedByKind || k in window.completedByKind,
+  );
+  return (
+    <Table head={["Completed, by kind", `Last ${days} days`, "All time"]}>
+      {kinds.map((k) => (
+        <tr key={k}>
+          <td>
+            <Link
+              href={`/dashboard/transactions?kind=${k}&status=SUCCESSFUL`}
+              className="text-primary-soft hover:underline"
+            >
+              {KIND_LABELS[k]}
+            </Link>
+          </td>
+          <td className="tabular-nums">
+            {(window.completedByKind[k] ?? 0).toLocaleString()}
+          </td>
+          <td className="tabular-nums">
+            {(allTime.completedByKind[k] ?? 0).toLocaleString()}
+          </td>
+        </tr>
+      ))}
+    </Table>
+  );
+}
+
+/**
+ * Transactions over the last 7, 30 or 90 Lagos days, with totals for the
+ * window and all time. Reversal refund rows are left out so a reversed
+ * payment counts once (as reversed).
+ */
+function TransactionsOverview() {
+  const [days, setDays] = useState<Window>("30");
+  const res = useResource<TransactionSummary>(
+    `/admin/transactions/summary?days=${days}`,
+  );
+  const s = res.data;
+  const w = s?.totals.window;
+  const all = s?.totals.allTime;
+  return (
+    <Card
+      title="Transactions"
+      className="mt-6"
+      actions={
+        <div role="group" aria-label="Window" className="flex gap-1">
+          {WINDOWS.map((d) => (
+            <Button
+              key={d}
+              size="sm"
+              variant={d === days ? "primary" : "secondary"}
+              aria-pressed={d === days}
+              onClick={() => setDays(d)}
+            >
+              {d} days
+            </Button>
+          ))}
+        </div>
+      }
+    >
+      <ErrorBox error={res.error} />
+      {!s && res.loading && <Loading />}
+      {s && w && all && (
+        <>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <StatTile
+              label={`Total, ${s.days} days`}
+              value={w.counts.total.toLocaleString()}
+              hint={`${w.counts.pending.toLocaleString()} pending · all time ${all.counts.total.toLocaleString()}`}
+            />
+            <StatTile
+              label="Completed"
+              value={w.counts.completed.toLocaleString()}
+              hint={`All time ${all.counts.completed.toLocaleString()}`}
+            />
+            <StatTile
+              label="Failed"
+              value={w.counts.failed.toLocaleString()}
+              hint={`All time ${all.counts.failed.toLocaleString()}`}
+            />
+            <StatTile
+              label="Reversed"
+              value={w.counts.reversed.toLocaleString()}
+              hint={`All time ${all.counts.reversed.toLocaleString()}`}
+            />
+            <StatTile
+              label="Completed value"
+              value={<Amounts amounts={w.completedAmountMinor} />}
+              hint={
+                <>
+                  All time <Amounts amounts={all.completedAmountMinor} />
+                </>
+              }
+            />
+          </div>
+          <div className="mt-5">
+            <TransactionsChart series={s.series} dimmed={res.loading} />
+          </div>
+          <p className="mt-2 text-xs text-muted">
+            Per Lagos day. Completed went through; failed did not; reversed
+            went through and was later undone (counted only as reversed);
+            total is every transaction, pending included. Refunds of reversed
+            payments are not counted again. Amounts exclude fees.
+          </p>
+          <div className="mt-5">
+            <ByKind window={w} allTime={all} days={String(s.days)} />
+          </div>
+        </>
+      )}
+    </Card>
+  );
+}
+
 export default function DashboardPage() {
   useDocumentTitle("Overview");
   const health = useResource<IntegrationHealth>("/admin/health/integrations");
@@ -189,6 +339,7 @@ export default function DashboardPage() {
         }
       />
       <Stats key={statsKey} />
+      <TransactionsOverview key={`txn-${statsKey}`} />
 
       <h2 className="mb-3 mt-8 text-sm font-semibold text-foreground">Integrations</h2>
       <ErrorBox error={health.error} />
