@@ -5,14 +5,16 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { qs } from "../../../lib/api";
 import { formatDateTime, humanize, shortId } from "../../../lib/format";
-import { formatMinor } from "../../../lib/money";
+import { formatMinor, formatMinorCompact } from "../../../lib/money";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useResource } from "../../../lib/useResource";
 import {
+  KIND_LABELS,
   TRANSACTION_KINDS,
   TRANSACTION_STATUSES,
-  type Page,
   type Transaction,
+  type TransactionListTotals,
+  type TransactionPage,
 } from "../../../lib/types";
 import { CursorPager } from "../../../components/CursorPager";
 import {
@@ -55,14 +57,43 @@ const customerName = (c: Transaction["customer"]): string =>
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
+/** "312 transactions · ₦4.2m completed", for the filters as applied. */
+function TotalsLine({ totals }: { totals: TransactionListTotals }) {
+  const amounts = Object.entries(totals.completedAmountMinor).filter(
+    ([, v]) => v !== "0",
+  );
+  return (
+    <p className="mb-3 text-sm text-muted">
+      <span className="font-semibold text-foreground">
+        {totals.count.toLocaleString()}
+      </span>{" "}
+      {totals.count === 1 ? "transaction" : "transactions"}
+      {amounts.map(([currency, minor]) => (
+        <span key={currency} title={`${formatMinor(minor, currency)} completed`}>
+          {" · "}
+          <span className="font-semibold text-foreground">
+            {formatMinorCompact(minor, currency)}
+          </span>{" "}
+          completed
+        </span>
+      ))}
+    </p>
+  );
+}
+
 function Results({ filters }: { filters: Filters }) {
   const [stack, setStack] = useState<string[]>([]);
   const cursor = stack[stack.length - 1];
-  const res = useResource<Page<Transaction>>(
+  const res = useResource<TransactionPage>(
     `/admin/transactions${qs({ ...filters, cursor, limit: "25" })}`,
   );
+  // Totals come with the first page; keep them while paging on.
+  const [totals, setTotals] = useState<TransactionListTotals | null>(null);
+  const fresh = res.data?.totals;
+  if (fresh && fresh !== totals) setTotals(fresh);
   return (
     <Card>
+      {totals && <TotalsLine totals={totals} />}
       <ErrorBox error={res.error} />
       {!res.data && res.loading && <Loading />}
       {res.data && res.data.items.length === 0 && (
@@ -219,7 +250,7 @@ function TransactionsScreen() {
           onChange={(e) => setDraft({ ...draft, kind: e.target.value })}
           options={[
             { value: "", label: "Any kind" },
-            ...TRANSACTION_KINDS.map((s) => ({ value: s, label: humanize(s) })),
+            ...TRANSACTION_KINDS.map((s) => ({ value: s, label: KIND_LABELS[s] })),
           ]}
         />
         <Select
