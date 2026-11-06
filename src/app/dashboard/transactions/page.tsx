@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { qs } from "../../../lib/api";
 import { formatDateTime, humanize, shortId } from "../../../lib/format";
-import { formatKobo } from "../../../lib/money";
+import { formatMinor } from "../../../lib/money";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useResource } from "../../../lib/useResource";
 import {
@@ -29,11 +29,29 @@ import {
 } from "../../../components/ui";
 
 interface Filters {
+  q: string;
   status: string;
   kind: string;
+  direction: string;
+  from: string;
+  to: string;
   reference: string;
   customerId: string;
 }
+
+const NO_FILTERS: Filters = {
+  q: "",
+  status: "",
+  kind: "",
+  direction: "",
+  from: "",
+  to: "",
+  reference: "",
+  customerId: "",
+};
+
+const customerName = (c: Transaction["customer"]): string =>
+  c ? [c.firstName, c.lastName].filter(Boolean).join(" ") || c.phoneNumber : "";
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
@@ -74,10 +92,10 @@ function Results({ filters }: { filters: Filters }) {
                 <Badge>{t.status}</Badge>
               </td>
               <td className="whitespace-nowrap tabular-nums">
-                {formatKobo(t.amountMinor)}
+                {formatMinor(t.amountMinor, t.currency)}
               </td>
               <td className="whitespace-nowrap tabular-nums">
-                {t.feeMinor === "0" ? "—" : formatKobo(t.feeMinor)}
+                {t.feeMinor === "0" ? "—" : formatMinor(t.feeMinor, t.currency)}
               </td>
               <td>
                 {t.counterpartyName ?? "—"}
@@ -93,9 +111,16 @@ function Results({ filters }: { filters: Filters }) {
                 {t.customerId ? (
                   <Link
                     href={`/dashboard/users/${t.customerId}`}
-                    className="font-mono text-xs text-primary-soft hover:underline"
+                    className="text-primary-soft hover:underline"
                   >
-                    {shortId(t.customerId)}
+                    {customerName(t.customer) || (
+                      <span className="font-mono text-xs">{shortId(t.customerId)}</span>
+                    )}
+                    {t.customer && (
+                      <span className="block font-mono text-xs text-muted">
+                        {t.customer.phoneNumber}
+                      </span>
+                    )}
                   </Link>
                 ) : (
                   "—"
@@ -121,8 +146,12 @@ function TransactionsScreen() {
   const params = useSearchParams();
   const router = useRouter();
   const filters: Filters = {
+    q: params.get("q") ?? "",
     status: params.get("status") ?? "",
     kind: params.get("kind") ?? "",
+    direction: params.get("direction") ?? "",
+    from: params.get("from") ?? "",
+    to: params.get("to") ?? "",
     reference: params.get("reference") ?? "",
     customerId: params.get("customerId") ?? "",
   };
@@ -133,11 +162,16 @@ function TransactionsScreen() {
     e.preventDefault();
     const next = {
       ...draft,
+      q: draft.q.trim(),
       reference: draft.reference.trim(),
       customerId: draft.customerId.trim(),
     };
     if (next.customerId && !UUID.test(next.customerId)) {
       setFormError("Customer id must be a full UUID.");
+      return;
+    }
+    if (next.from && next.to && next.from > next.to) {
+      setFormError("The start date is after the end date.");
       return;
     }
     setFormError(null);
@@ -149,8 +183,27 @@ function TransactionsScreen() {
       <PageHeader title="Transactions" description="All money movements, newest first." />
       <form
         onSubmit={apply}
-        className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.5fr_1.5fr_auto] lg:items-end"
+        className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-end"
       >
+        <TextInput
+          className="sm:col-span-2"
+          label="Search"
+          placeholder="Name, phone, email, reference or counterparty"
+          value={draft.q}
+          onChange={(e) => setDraft({ ...draft, q: e.target.value })}
+        />
+        <TextInput
+          label="From"
+          type="date"
+          value={draft.from}
+          onChange={(e) => setDraft({ ...draft, from: e.target.value })}
+        />
+        <TextInput
+          label="To"
+          type="date"
+          value={draft.to}
+          onChange={(e) => setDraft({ ...draft, to: e.target.value })}
+        />
         <Select
           label="Status"
           value={draft.status}
@@ -167,6 +220,16 @@ function TransactionsScreen() {
           options={[
             { value: "", label: "Any kind" },
             ...TRANSACTION_KINDS.map((s) => ({ value: s, label: humanize(s) })),
+          ]}
+        />
+        <Select
+          label="Direction"
+          value={draft.direction}
+          onChange={(e) => setDraft({ ...draft, direction: e.target.value })}
+          options={[
+            { value: "", label: "In and out" },
+            { value: "CREDIT", label: "Money in (credit)" },
+            { value: "DEBIT", label: "Money out (debit)" },
           ]}
         />
         <TextInput
@@ -186,7 +249,7 @@ function TransactionsScreen() {
           <Button
             variant="secondary"
             onClick={() => {
-              setDraft({ status: "", kind: "", reference: "", customerId: "" });
+              setDraft(NO_FILTERS);
               router.push("/dashboard/transactions");
             }}
           >

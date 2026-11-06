@@ -156,6 +156,25 @@ export default function CustomerDetailPage() {
               onDone={reloadCompliance}
             />
             <ConfirmAction
+              label="Allow another ID try"
+              permission="manageCompliance"
+              disabledReason={
+                c.kycRecords.some(
+                  (k) => (k.status === "MISMATCH" || k.status === "MANUAL_REVIEW") && !k.reviewedAt,
+                )
+                  ? undefined
+                  : "No failed ID checks to clear"
+              }
+              title="Let this customer try their ID again"
+              description="After 3 failed ID matches the customer is stuck in manual review. Once you have checked their details, this clears the failed checks so they can submit again. The checks stay on record."
+              textField={REASON}
+              confirmLabel="Allow retry"
+              onConfirm={({ text }) =>
+                api.post(`/admin/compliance/customers/${c.id}/kyc-retry`, { note: text })
+              }
+              onDone={res.reload}
+            />
+            <ConfirmAction
               label="Hold transfers"
               permission="manageCompliance"
               danger
@@ -224,6 +243,7 @@ export default function CustomerDetailPage() {
               ["PIN locked until", c.pinLockedUntil ? formatDateTime(c.pinLockedUntil) : "—"],
               ["Consents", `Terms ${c.termsVersion}, privacy ${c.privacyVersion} (${formatDateTime(c.consentedAt)})`],
               ["Joined", formatDateTime(c.createdAt)],
+              ["Referred by", referredBy(c)],
             ]}
           />
         </Card>
@@ -238,6 +258,7 @@ export default function CustomerDetailPage() {
                   <td>{k.checkType}</td>
                   <td>
                     <Badge>{k.status}</Badge>
+                    {k.reviewedAt && <span className="ml-2 text-xs text-muted">reviewed</span>}
                   </td>
                   <td>{k.provider}</td>
                   <td>
@@ -517,5 +538,29 @@ export default function CustomerDetailPage() {
         )}
       </Card>
     </>
+  );
+}
+
+/** The code entered at sign-up, and whose it is: a customer, or an agent/campaign label. */
+function referredBy(c: CustomerDetail): React.ReactNode {
+  const r = c.referredByCode;
+  if (!r) return "—";
+  const ownerName = r.owner
+    ? [r.owner.firstName, r.owner.lastName].filter(Boolean).join(" ") || "a customer"
+    : null;
+  return (
+    <span>
+      <span className="font-mono">{r.code}</span>
+      {r.owner ? (
+        <>
+          {" · "}
+          <Link className="underline" href={`/dashboard/users/${r.owner.id}`}>
+            {ownerName}
+          </Link>
+        </>
+      ) : r.label ? (
+        ` · ${r.label}`
+      ) : null}
+    </span>
   );
 }

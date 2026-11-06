@@ -68,12 +68,17 @@ function problemsOf(d: Draft, anyCurrency: boolean): string[] {
   return out;
 }
 
+/** PARTNER: the payments partner charges the fees; VMONIE: Vmonie does. */
+type ChargedBy = "PARTNER" | "VMONIE";
+
 function EditFee({
   rule,
+  chargedBy,
   onClose,
   onSaved,
 }: {
   rule: FeeRule;
+  chargedBy: ChargedBy;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -114,8 +119,9 @@ function EditFee({
       {() => (
         <form onSubmit={save} className="space-y-4">
           <p className="text-sm text-muted">
-            Vmonie&apos;s markup on top of the payments partner&apos;s own fee. The
-            partner charges it on every {rule.label.toLowerCase()} the moment you save.
+            {chargedBy === "VMONIE"
+              ? `Vmonie's fee on every ${rule.label.toLowerCase()}, charged from the moment you save.`
+              : `Vmonie's markup on top of the payments partner's own fee. The partner charges it on every ${rule.label.toLowerCase()} the moment you save.`}
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <TextInput
@@ -184,7 +190,7 @@ function EditFee({
               busy={busy}
               disabled={problems.length > 0}
             >
-              Save with partner
+              {chargedBy === "VMONIE" ? "Save" : "Save with partner"}
             </Button>
           </div>
         </form>
@@ -221,7 +227,7 @@ function Earnings() {
       }
     >
       <p className="mb-3 text-xs text-muted">
-        What the markup earned, as the partner credited it{from || to ? " in the period" : ", all time"}.
+        What fees earned{from || to ? " in the period" : ", all time"}.
         &ldquo;Held&rdquo; is on transfers still in flight, credited when they complete.
       </p>
       <ErrorBox error={res.error} />
@@ -249,15 +255,18 @@ function Earnings() {
 }
 
 /**
- * Vmonie's fee markup (zemfi-admin's Fees page). Read live from the payments
- * partner, which charges it; every change goes to the partner first and is audited
- * here with a reason. SUPER_ADMIN only.
+ * Vmonie's fees. Under the payments partner they are its
+ * markup, read live from the partner, which charges it; otherwise Vmonie
+ * charges them itself. Every change is audited with a reason. SUPER_ADMIN only.
  */
 export default function FeesPage() {
   useDocumentTitle("Fees");
   const session = useAdmin();
   const owner = session.status === "ready" && isOwner(session.me.roles);
-  const res = useResource<{ items: FeeRule[] }>(owner ? "/admin/fees" : null);
+  const res = useResource<{ items: FeeRule[]; chargedBy?: ChargedBy }>(
+    owner ? "/admin/fees" : null,
+  );
+  const chargedBy: ChargedBy = res.data?.chargedBy ?? "PARTNER";
   const [editing, setEditing] = useState<FeeRule | null>(null);
 
   if (!owner) {
@@ -274,7 +283,11 @@ export default function FeesPage() {
     <>
       <PageHeader
         title="Fees"
-        description="Vmonie's markup on each flow, charged by the payments partner on top of its own fee."
+        description={
+          chargedBy === "VMONIE"
+            ? "Vmonie's fee on each flow."
+            : "Vmonie's markup on each flow, charged by the payments partner on top of its own fee."
+        }
         actions={
           <Button variant="secondary" busy={res.loading} onClick={res.reload}>
             Refresh
@@ -309,7 +322,11 @@ export default function FeesPage() {
                     </p>
                     <p className="mt-1 text-xs text-muted" title={formatDateTime(r.updatedAt)}>
                       {!r.configured
-                        ? "Not set with the payments partner yet: charges nothing."
+                        ? r.defaultFee
+                          ? `Not set yet: charges the built-in fee (${r.defaultFee}).`
+                          : chargedBy === "VMONIE"
+                            ? "Not set yet: charges nothing."
+                            : "Not set with the payments partner yet: charges nothing."
                         : r.updatedByName
                           ? `Changed by ${r.updatedByName} ${age(r.updatedAt)}${r.lastReason ? ` — “${r.lastReason}”` : ""}`
                           : r.updatedAt
@@ -337,6 +354,7 @@ export default function FeesPage() {
       {editing && (
         <EditFee
           rule={editing}
+          chargedBy={chargedBy}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);

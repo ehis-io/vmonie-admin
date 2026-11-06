@@ -69,6 +69,25 @@ export interface CustomerSummary {
   tier: number;
   createdAt: string;
   accounts: { id: string; status: string; accountNumber: string | null }[];
+  /** Their latest money movement; null if they have never moved money.
+   * Absent from an older server. */
+  lastActivityAt?: string | null;
+}
+
+/** `active` on the customer list: moved money in the last N days, or ever. */
+export const ACTIVE_FILTERS = [
+  { value: "7", label: "Active in last 7 days" },
+  { value: "30", label: "Active in last 30 days" },
+  { value: "90", label: "Active in last 90 days" },
+  { value: "ever", label: "Ever moved money" },
+] as const;
+
+/** Distinct customers who moved money in each window, and ever. */
+export interface ActiveCustomers {
+  last7Days: number;
+  last30Days: number;
+  last90Days: number;
+  allTime: number;
 }
 
 export interface Account {
@@ -84,6 +103,23 @@ export interface Account {
   attempts: number;
   createdAt: string;
   ledgerBalanceMinor: string | null;
+}
+
+/** A referral code (GET /admin/referrals). Tracking only. */
+export interface ReferralCode {
+  id: string;
+  code: string;
+  /** The customer it belongs to; null for an agent or campaign code. */
+  owner: {
+    id: string;
+    name: string | null;
+    phoneNumber: string;
+    email: string | null;
+  } | null;
+  label: string | null;
+  active: boolean;
+  signups: number;
+  createdAt: string;
 }
 
 export interface CustomerDetail {
@@ -106,12 +142,21 @@ export interface CustomerDetail {
   privacyVersion: string;
   consentedAt: string;
   createdAt: string;
+  /** The referral code entered at sign-up, with its owner or its label. */
+  referredByCode?: {
+    id: string;
+    code: string;
+    label: string | null;
+    owner: { id: string; firstName: string | null; lastName: string | null } | null;
+  } | null;
   kycRecords: {
     id: string;
     checkType: string;
     provider: string;
     status: string;
     outcome: unknown;
+    /** Staff let the customer retry: no longer counts towards manual review. */
+    reviewedAt: string | null;
     createdAt: string;
   }[];
   accounts: Account[];
@@ -149,6 +194,8 @@ export interface Transaction {
   counterpartyAccount: string | null;
   /** Only on BILL_PAYMENT. */
   bill?: BillInfo | null;
+  /** Who it belongs to. Absent from an older server. */
+  customer?: TransactionCustomer | null;
   providerCode: string;
   providerReference: string | null;
   originalId: string | null;
@@ -159,6 +206,14 @@ export interface Transaction {
   nextStatusCheckAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TransactionCustomer {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  phoneNumber: string;
+  email: string | null;
 }
 
 export interface TransactionDetail extends Transaction {
@@ -407,8 +462,12 @@ export interface FeeRule {
   feeMin: string | null;
   feeMax: string | null;
   active: boolean;
-  /** False when the partner holds no rule yet (charges nothing). */
+  /**
+   * False when no rule is set yet: under the partner it charges nothing;
+   * when Vmonie charges its own fees it charges `defaultFee`.
+   */
   configured: boolean;
+  defaultFee: string | null;
   updatedAt: string | null;
   updatedByName: string | null;
   lastReason: string | null;
@@ -483,6 +542,8 @@ export interface OverviewStats {
     byStatus: Record<string, number>;
     byTier: Record<string, number>;
     newLast7Days: number;
+    /** Absent from an older server. */
+    active?: ActiveCustomers;
   };
   accounts: { open: number; openedToday: number };
   today: {

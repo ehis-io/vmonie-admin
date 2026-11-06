@@ -25,6 +25,23 @@ export function formatKobo(
   return `${negative ? "-" : ""}₦${naira}.${kobo}`;
 }
 
+/**
+ * An amount in minor units in its own currency: naira as `₦1,234.56`, any
+ * other as `USD 1,234.56`. For lists that mix currencies, where assuming
+ * naira would misstate a row.
+ */
+export function formatMinor(
+  minor: string | number | bigint | null | undefined,
+  currency: string | null | undefined,
+): string {
+  const code = (currency ?? "NGN").toUpperCase();
+  const formatted = formatKobo(minor);
+  if (code === "NGN" || formatted === "—" || !formatted.includes("₦")) {
+    return formatted;
+  }
+  return formatted.replace("₦", `${code} `);
+}
+
 /** `"150050"` → `"1500.50"`, for pre-filling a naira input. */
 export function koboToNairaInput(minor: string | null | undefined): string {
   if (!minor || !/^-?\d+$/.test(minor)) return "";

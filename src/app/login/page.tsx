@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense, useRef, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   api,
@@ -94,6 +95,14 @@ function LoginForm() {
         <Button type="submit" busy={busy} className="w-full">
           Sign in
         </Button>
+        <p className="text-center text-sm">
+          <Link
+            href="/forgot-password"
+            className="text-primary-soft hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </p>
       </form>
     </main>
   );
