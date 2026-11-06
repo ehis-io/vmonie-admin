@@ -32,6 +32,9 @@ export const PERMISSIONS = {
   // Feature switches (admin-features.controller.ts): any admin reads them,
   // OPERATIONS changes them.
   updateFeature: ["OPERATIONS"],
+  // Referral codes (admin-referrals.controller.ts): any admin reads them,
+  // OPERATIONS makes and switches them.
+  manageReferrals: ["OPERATIONS"],
   // Fees and staff accounts are the owner's (SUPER_ADMIN), as in zemfi.
   manageFees: [],
   manageAdmins: [],

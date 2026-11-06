@@ -37,6 +37,7 @@ const SECTIONS: { title?: string; links: NavLink[] }[] = [
         permission: "manageCompliance",
       },
       { href: "/dashboard/features", label: "Features" },
+      { href: "/dashboard/referrals", label: "Referrals" },
     ],
   },
   {
@@ -116,14 +117,14 @@ export function Sidebar({ me }: { me: AdminMe }) {
 
   const account = (
     <div className="flex items-center justify-between gap-3 rounded-lg border border-surface-border bg-surface/60 px-3 py-2">
-      <div className="min-w-0">
+      <Link href="/dashboard/account" className="min-w-0 hover:underline" title="Your account">
         <p className="truncate text-sm font-semibold text-foreground">
           {me.name ?? me.email}
         </p>
         <p className="truncate text-[10px] font-bold uppercase tracking-wider text-muted">
           {me.roles.map(humanize).join(", ")}
         </p>
-      </div>
+      </Link>
       <Button variant="ghost" size="sm" onClick={logout}>
         Sign out
       </Button>

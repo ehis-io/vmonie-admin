@@ -102,6 +102,39 @@ function Stats() {
           warn={s.openComplianceHolds > 0}
         />
       </div>
+      {s.customers.active && (
+        <>
+          <h2 className="mb-2 mt-5 text-sm font-semibold text-foreground">
+            Active customers
+            <span className="ml-2 font-normal text-muted">
+              moved money: a deposit, transfer, Vmonie transfer or bill that
+              went through
+            </span>
+          </h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Tile
+              label="Last 7 days"
+              value={s.customers.active.last7Days.toLocaleString()}
+              href="/dashboard/users?active=7"
+            />
+            <Tile
+              label="Last 30 days"
+              value={s.customers.active.last30Days.toLocaleString()}
+              href="/dashboard/users?active=30"
+            />
+            <Tile
+              label="Last 90 days"
+              value={s.customers.active.last90Days.toLocaleString()}
+              href="/dashboard/users?active=90"
+            />
+            <Tile
+              label={`All time · of ${s.customers.total.toLocaleString()}`}
+              value={s.customers.active.allTime.toLocaleString()}
+              href="/dashboard/users?active=ever"
+            />
+          </div>
+        </>
+      )}
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <Card title="Deposits today">
           <p className="text-2xl font-bold tabular-nums text-foreground">

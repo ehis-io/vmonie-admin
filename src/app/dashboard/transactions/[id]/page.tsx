@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api } from "../../../../lib/api";
 import { formatDateTime, humanize, maskAccount, providerLabel } from "../../../../lib/format";
-import { formatKobo } from "../../../../lib/money";
+import { formatKobo, formatMinor } from "../../../../lib/money";
 import { useDocumentTitle } from "../../../../lib/useDocumentTitle";
 import { useResource } from "../../../../lib/useResource";
 import type { TransactionDetail } from "../../../../lib/types";
@@ -109,9 +109,9 @@ export default function TransactionDetailPage() {
         <Card title="Details">
           <KeyValues
             rows={[
-              ["Amount", formatKobo(t.amountMinor)],
-              ["Fee", formatKobo(t.feeMinor)],
-              ["Total", formatKobo(total)],
+              ["Amount", formatMinor(t.amountMinor, t.currency)],
+              ["Fee", formatMinor(t.feeMinor, t.currency)],
+              ["Total", formatMinor(total, t.currency)],
               ["Narration", t.narration],
               [
                 "Customer",
@@ -119,9 +119,20 @@ export default function TransactionDetailPage() {
                   <Link
                     key="c"
                     href={`/dashboard/users/${t.customerId}`}
-                    className="font-mono text-xs text-primary-soft hover:underline"
+                    className="text-primary-soft hover:underline"
                   >
-                    {t.customerId}
+                    {t.customer
+                      ? [t.customer.firstName, t.customer.lastName]
+                          .filter(Boolean)
+                          .join(" ") || "(no name yet)"
+                      : null}
+                    <span className="block font-mono text-xs text-muted">
+                      {t.customer
+                        ? [t.customer.phoneNumber, t.customer.email]
+                            .filter(Boolean)
+                            .join(" · ")
+                        : t.customerId}
+                    </span>
                   </Link>
                 ) : (
                   "—"

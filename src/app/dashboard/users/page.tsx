@@ -4,10 +4,14 @@ import React, { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { qs } from "../../../lib/api";
-import { formatDateTime } from "../../../lib/format";
+import { age, formatDateTime } from "../../../lib/format";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useResource } from "../../../lib/useResource";
-import type { CustomerSummary, Page } from "../../../lib/types";
+import {
+  ACTIVE_FILTERS,
+  type CustomerSummary,
+  type Page,
+} from "../../../lib/types";
 import { CursorPager } from "../../../components/CursorPager";
 import {
   Badge,
@@ -17,15 +21,18 @@ import {
   ErrorBox,
   Loading,
   PageHeader,
+  Select,
   Table,
   TextInput,
 } from "../../../components/ui";
 
-function Results({ q }: { q: string }) {
+const ACTIVE_VALUES: readonly string[] = ACTIVE_FILTERS.map((f) => f.value);
+
+function Results({ q, active }: { q: string; active: string }) {
   const [stack, setStack] = useState<string[]>([]);
   const cursor = stack[stack.length - 1];
   const res = useResource<Page<CustomerSummary>>(
-    `/admin/customers${qs({ q, cursor, limit: "25" })}`,
+    `/admin/customers${qs({ q, active, cursor, limit: "25" })}`,
   );
   return (
     <Card>
@@ -35,7 +42,9 @@ function Results({ q }: { q: string }) {
         <Empty>No users match.</Empty>
       )}
       {res.data && res.data.items.length > 0 && (
-        <Table head={["Name", "Phone", "Status", "Tier", "Accounts", "Joined"]}>
+        <Table
+          head={["Name", "Phone", "Status", "Tier", "Accounts", "Last activity", "Joined"]}
+        >
           {res.data.items.map((c) => (
             <tr key={c.id}>
               <td>
@@ -64,6 +73,15 @@ function Results({ q }: { q: string }) {
                       </span>
                     ))}
               </td>
+              <td className="whitespace-nowrap">
+                {c.lastActivityAt ? (
+                  <span title={formatDateTime(c.lastActivityAt)}>
+                    {age(c.lastActivityAt)}
+                  </span>
+                ) : (
+                  <span className="text-muted">Never</span>
+                )}
+              </td>
               <td className="whitespace-nowrap">{formatDateTime(c.createdAt)}</td>
             </tr>
           ))}
@@ -84,20 +102,24 @@ function UsersScreen() {
   const params = useSearchParams();
   const router = useRouter();
   const q = params.get("q") ?? "";
+  const rawActive = params.get("active") ?? "";
+  const active = ACTIVE_VALUES.includes(rawActive) ? rawActive : "";
   const [draft, setDraft] = useState(q);
 
+  const go = (next: { q: string; active: string }) =>
+    router.push(`/dashboard/users${qs(next)}`);
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push(`/dashboard/users${qs({ q: draft.trim() })}`);
+    go({ q: draft.trim(), active });
   };
 
   return (
     <>
       <PageHeader
         title="Users"
-        description="Everyone with a Vmonie account. Search by phone number, name, full account number or customer id."
+        description="Everyone with a Vmonie account. Search by phone number, name, full account number or customer id. Active means they moved money: a deposit, transfer, Vmonie transfer or bill that went through."
       />
-      <form onSubmit={submit} className="mb-4 flex max-w-xl items-end gap-2">
+      <form onSubmit={submit} className="mb-4 flex max-w-3xl flex-wrap items-end gap-2">
         <TextInput
           className="flex-1"
           placeholder="08031234567, Okafor, 9038042624…"
@@ -108,9 +130,15 @@ function UsersScreen() {
         <Button type="submit" variant="secondary">
           Search
         </Button>
+        <Select
+          aria-label="Activity"
+          value={active}
+          onChange={(e) => go({ q, active: e.target.value })}
+          options={[{ value: "", label: "Everyone" }, ...ACTIVE_FILTERS]}
+        />
       </form>
       {/* Keyed by the query so paging restarts on a new search. */}
-      <Results key={q} q={q} />
+      <Results key={`${q}|${active}`} q={q} active={active} />
     </>
   );
 }
