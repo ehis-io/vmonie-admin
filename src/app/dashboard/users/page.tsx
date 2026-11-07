@@ -60,7 +60,13 @@ function Volume({ stats }: { stats: TxnStats }) {
 }
 
 /** Every user's transactions in the period, whatever the search or activity filter. */
-function TotalsLine({ totals, period }: { totals: TxnStats; period: TxnPeriod }) {
+function TotalsLine({
+  totals,
+  period,
+}: {
+  totals: TxnStats;
+  period: TxnPeriod;
+}) {
   return (
     <p className="mb-3 text-sm text-muted">
       All users, {periodLabel(period)}:{" "}
@@ -164,7 +170,9 @@ function Results({
                   <span className="text-muted">Never</span>
                 )}
               </td>
-              <td className="whitespace-nowrap">{formatDateTime(c.createdAt)}</td>
+              <td className="whitespace-nowrap">
+                {formatDateTime(c.createdAt)}
+              </td>
             </tr>
           ))}
         </Table>
@@ -209,7 +217,10 @@ function UsersScreen() {
         title="Users"
         description="Everyone with a Vmonie account. Search by phone number, name, full account number or customer id. Active means they moved money: a deposit, transfer, Vmonie transfer or bill that went through. Transactions and volume count those movements in the chosen period; volume is the amount moved, before fees."
       />
-      <form onSubmit={submit} className="mb-4 flex max-w-3xl flex-wrap items-end gap-2">
+      <form
+        onSubmit={submit}
+        className="mb-4 flex max-w-3xl flex-wrap items-end gap-2"
+      >
         <TextInput
           className="flex-1"
           placeholder="08031234567, Okafor, 9038042624…"
@@ -233,14 +244,21 @@ function UsersScreen() {
             go({
               q,
               active,
-              period: isPeriod(e.target.value) ? e.target.value : DEFAULT_PERIOD,
+              period: isPeriod(e.target.value)
+                ? e.target.value
+                : DEFAULT_PERIOD,
             })
           }
           options={[...TXN_PERIODS]}
         />
       </form>
       {/* Keyed by the query so paging restarts on a new search. */}
-      <Results key={`${q}|${active}|${period}`} q={q} active={active} period={period} />
+      <Results
+        key={`${q}|${active}|${period}`}
+        q={q}
+        active={active}
+        period={period}
+      />
     </>
   );
 }
