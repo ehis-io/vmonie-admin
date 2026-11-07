@@ -135,7 +135,31 @@ export interface CustomerSummary {
   /** Their latest money movement; null if they have never moved money.
    * Absent from an older server. */
   lastActivityAt?: string | null;
+  /** Money movements in the list's period. Absent from an older server. */
+  transactions?: TxnStats;
 }
+
+/** How many money movements, and how much per currency (minor units). */
+export interface TxnStats {
+  count: number;
+  volumeMinor: Record<string, string>;
+}
+
+/** The customer list: a page, its period, and every customer's total for
+ * that period (on the first page only; null on later ones). */
+export interface CustomerPage extends Page<CustomerSummary> {
+  period?: TxnPeriod;
+  totals?: TxnStats | null;
+}
+
+/** `period` on the customer list: the window for transaction count and volume. */
+export const TXN_PERIODS = [
+  { value: "30", label: "Last 30 days" },
+  { value: "90", label: "Last 3 months" },
+  { value: "180", label: "Last 6 months" },
+  { value: "all", label: "All time" },
+] as const;
+export type TxnPeriod = (typeof TXN_PERIODS)[number]["value"];
 
 /** `active` on the customer list: moved money in the last N days, or ever. */
 export const ACTIVE_FILTERS = [
