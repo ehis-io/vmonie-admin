@@ -5,12 +5,15 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { qs } from "../../../lib/api";
 import { age, formatDateTime } from "../../../lib/format";
+import { formatMinor, formatMinorCompact } from "../../../lib/money";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useResource } from "../../../lib/useResource";
 import {
   ACTIVE_FILTERS,
-  type CustomerSummary,
-  type Page,
+  TXN_PERIODS,
+  type CustomerPage,
+  type TxnPeriod,
+  type TxnStats,
 } from "../../../lib/types";
 import { CursorPager } from "../../../components/CursorPager";
 import {
@@ -27,15 +30,84 @@ import {
 } from "../../../components/ui";
 
 const ACTIVE_VALUES: readonly string[] = ACTIVE_FILTERS.map((f) => f.value);
+const DEFAULT_PERIOD: TxnPeriod = "30";
+const isPeriod = (v: string): v is TxnPeriod =>
+  TXN_PERIODS.some((p) => p.value === v);
+const periodLabel = (p: TxnPeriod) =>
+  TXN_PERIODS.find((x) => x.value === p)?.label.toLowerCase() ?? "";
 
-function Results({ q, active }: { q: string; active: string }) {
+/** Non-zero volumes, one per currency. */
+const volumes = (stats: TxnStats) =>
+  Object.entries(stats.volumeMinor).filter(([, v]) => v !== "0");
+
+/** "₦4.2m · GH₵12k", or "—" when nothing moved. */
+function Volume({ stats }: { stats: TxnStats }) {
+  const list = volumes(stats);
+  if (!list.length) return <span className="text-muted">—</span>;
+  return (
+    <>
+      {list.map(([currency, minor]) => (
+        <span
+          key={currency}
+          className="block"
+          title={formatMinor(minor, currency)}
+        >
+          {formatMinorCompact(minor, currency)}
+        </span>
+      ))}
+    </>
+  );
+}
+
+/** Every user's transactions in the period, whatever the search or activity filter. */
+function TotalsLine({
+  totals,
+  period,
+}: {
+  totals: TxnStats;
+  period: TxnPeriod;
+}) {
+  return (
+    <p className="mb-3 text-sm text-muted">
+      All users, {periodLabel(period)}:{" "}
+      <span className="font-semibold text-foreground">
+        {totals.count.toLocaleString()}
+      </span>{" "}
+      {totals.count === 1 ? "transaction" : "transactions"}
+      {volumes(totals).map(([currency, minor]) => (
+        <span key={currency} title={formatMinor(minor, currency)}>
+          {" · "}
+          <span className="font-semibold text-foreground">
+            {formatMinorCompact(minor, currency)}
+          </span>{" "}
+          volume
+        </span>
+      ))}
+    </p>
+  );
+}
+
+function Results({
+  q,
+  active,
+  period,
+}: {
+  q: string;
+  active: string;
+  period: TxnPeriod;
+}) {
   const [stack, setStack] = useState<string[]>([]);
   const cursor = stack[stack.length - 1];
-  const res = useResource<Page<CustomerSummary>>(
-    `/admin/customers${qs({ q, active, cursor, limit: "25" })}`,
+  const res = useResource<CustomerPage>(
+    `/admin/customers${qs({ q, active, period, cursor, limit: "25" })}`,
   );
+  // Totals come with the first page; keep them while paging on.
+  const [totals, setTotals] = useState<TxnStats | null>(null);
+  const fresh = res.data?.totals;
+  if (fresh && fresh !== totals) setTotals(fresh);
   return (
     <Card>
+      {totals && <TotalsLine totals={totals} period={period} />}
       <ErrorBox error={res.error} />
       {!res.data && res.loading && <Loading />}
       {res.data && res.data.items.length === 0 && (
@@ -43,7 +115,17 @@ function Results({ q, active }: { q: string; active: string }) {
       )}
       {res.data && res.data.items.length > 0 && (
         <Table
-          head={["Name", "Phone", "Status", "Tier", "Accounts", "Last activity", "Joined"]}
+          head={[
+            "Name",
+            "Phone",
+            "Status",
+            "Tier",
+            "Accounts",
+            "Transactions",
+            "Volume",
+            "Last activity",
+            "Joined",
+          ]}
         >
           {res.data.items.map((c) => (
             <tr key={c.id}>
@@ -73,6 +155,12 @@ function Results({ q, active }: { q: string; active: string }) {
                       </span>
                     ))}
               </td>
+              <td className="tabular-nums">
+                {c.transactions ? c.transactions.count.toLocaleString() : "—"}
+              </td>
+              <td className="whitespace-nowrap tabular-nums">
+                {c.transactions ? <Volume stats={c.transactions} /> : "—"}
+              </td>
               <td className="whitespace-nowrap">
                 {c.lastActivityAt ? (
                   <span title={formatDateTime(c.lastActivityAt)}>
@@ -82,7 +170,9 @@ function Results({ q, active }: { q: string; active: string }) {
                   <span className="text-muted">Never</span>
                 )}
               </td>
-              <td className="whitespace-nowrap">{formatDateTime(c.createdAt)}</td>
+              <td className="whitespace-nowrap">
+                {formatDateTime(c.createdAt)}
+              </td>
             </tr>
           ))}
         </Table>
@@ -104,22 +194,33 @@ function UsersScreen() {
   const q = params.get("q") ?? "";
   const rawActive = params.get("active") ?? "";
   const active = ACTIVE_VALUES.includes(rawActive) ? rawActive : "";
+  const rawPeriod = params.get("period") ?? "";
+  const period = isPeriod(rawPeriod) ? rawPeriod : DEFAULT_PERIOD;
   const [draft, setDraft] = useState(q);
 
-  const go = (next: { q: string; active: string }) =>
-    router.push(`/dashboard/users${qs(next)}`);
+  const go = (next: { q: string; active: string; period: TxnPeriod }) =>
+    router.push(
+      `/dashboard/users${qs({
+        ...next,
+        // The default stays out of the URL.
+        period: next.period === DEFAULT_PERIOD ? "" : next.period,
+      })}`,
+    );
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    go({ q: draft.trim(), active });
+    go({ q: draft.trim(), active, period });
   };
 
   return (
     <>
       <PageHeader
         title="Users"
-        description="Everyone with a Vmonie account. Search by phone number, name, full account number or customer id. Active means they moved money: a deposit, transfer, Vmonie transfer or bill that went through."
+        description="Everyone with a Vmonie account. Search by phone number, name, full account number or customer id. Active means they moved money: a deposit, transfer, Vmonie transfer or bill that went through. Transactions and volume count those movements in the chosen period; volume is the amount moved, before fees."
       />
-      <form onSubmit={submit} className="mb-4 flex max-w-3xl flex-wrap items-end gap-2">
+      <form
+        onSubmit={submit}
+        className="mb-4 flex max-w-3xl flex-wrap items-end gap-2"
+      >
         <TextInput
           className="flex-1"
           placeholder="08031234567, Okafor, 9038042624…"
@@ -133,12 +234,31 @@ function UsersScreen() {
         <Select
           aria-label="Activity"
           value={active}
-          onChange={(e) => go({ q, active: e.target.value })}
+          onChange={(e) => go({ q, active: e.target.value, period })}
           options={[{ value: "", label: "Everyone" }, ...ACTIVE_FILTERS]}
+        />
+        <Select
+          aria-label="Transactions period"
+          value={period}
+          onChange={(e) =>
+            go({
+              q,
+              active,
+              period: isPeriod(e.target.value)
+                ? e.target.value
+                : DEFAULT_PERIOD,
+            })
+          }
+          options={[...TXN_PERIODS]}
         />
       </form>
       {/* Keyed by the query so paging restarts on a new search. */}
-      <Results key={`${q}|${active}`} q={q} active={active} />
+      <Results
+        key={`${q}|${active}|${period}`}
+        q={q}
+        active={active}
+        period={period}
+      />
     </>
   );
 }
