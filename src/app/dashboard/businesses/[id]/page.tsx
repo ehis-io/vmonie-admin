@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api } from "../../../../lib/api";
-import { can, requiredHint, useAdmin } from "../../../../lib/access";
+import { can, isOwner, requiredHint, useAdmin } from "../../../../lib/access";
 import { formatDateTime, shortId } from "../../../../lib/format";
 import { formatKobo } from "../../../../lib/money";
 import { useDocumentTitle } from "../../../../lib/useDocumentTitle";
@@ -15,6 +15,7 @@ import {
   IpAllowlistCard,
   WebhookCard,
 } from "../../../../components/business/AccessCards";
+import { SelfApproveBusiness } from "../../../../components/business/SelfApproveBusiness";
 import { UsersCard } from "../../../../components/business/UsersCard";
 import {
   BusinessTransactionsCard,
@@ -82,7 +83,14 @@ export default function BusinessDetailPage() {
         description={`Business API account · created ${formatDateTime(b.createdAt)}`}
         actions={
           <>
-            {b.status === "PENDING" && (
+            {b.status === "PENDING" && ownCreation && me && isOwner(me.roles) && (
+              <SelfApproveBusiness
+                businessId={b.id}
+                businessName={b.name}
+                onDone={res.reload}
+              />
+            )}
+            {b.status === "PENDING" && !(ownCreation && me && isOwner(me.roles)) && (
               <ConfirmAction
                 label="Approve"
                 permission="approveBusiness"
