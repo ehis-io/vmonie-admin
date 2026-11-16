@@ -9,6 +9,7 @@ import type {
   BusinessDetail,
   BusinessWebhookDelivery,
   BusinessWebhookResult,
+  BusinessWebhookTestResult,
   CreatedBusinessKey,
 } from "../../lib/types";
 import { ConfirmAction } from "../ConfirmAction";
@@ -25,6 +26,19 @@ import {
   TextArea,
   TextInput,
 } from "../ui";
+
+/** The same settings are self-service in the business's own dashboard. */
+function SelfServiceNote({ what }: { what: string }) {
+  return (
+    <p className="mb-3 text-xs text-muted">
+      The business&apos;s owners and developers can manage {what} themselves in
+      their Vmonie Business dashboard; staff can still do it here.
+    </p>
+  );
+}
+
+const isTestResult = (v: unknown): v is BusinessWebhookTestResult =>
+  typeof v === "object" && v !== null && "delivered" in v && "statusCode" in v;
 
 // ─── API keys ─────────────────────────────────────────────────────────────
 
@@ -69,6 +83,7 @@ export function ApiKeysCard({
         />
       }
     >
+      <SelfServiceNote what="API keys" />
       {business.status === "PENDING" && (
         <Alert tone="info" className="mb-4">
           Keys can be issued now but the API refuses them until the business is
@@ -201,6 +216,7 @@ export function IpAllowlistCard({
         />
       }
     >
+      <SelfServiceNote what="the IP allowlist" />
       <p className="mb-3 text-sm text-muted">
         IPv4 or IPv6 addresses, or ranges in CIDR form (e.g.{" "}
         <span className="font-mono">203.0.113.0/24</span>), one per line.{" "}
@@ -242,6 +258,7 @@ export function WebhookCard({
   // A secret lives here only while its dialog is open.
   const [secret, setSecret] = useState<string | null>(null);
   const [retryNote, setRetryNote] = useState<string | null>(null);
+  const [test, setTest] = useState<BusinessWebhookTestResult | null>(null);
   const canEdit = useCan("manageBusinessAccess");
   const canView = useCan("viewBusinessWebhooks");
   const deliveries = useResource<BusinessWebhookDelivery[]>(
@@ -256,6 +273,7 @@ export function WebhookCard({
         address, signed with the business&apos;s secret. Failed deliveries are
         retried.
       </p>
+      <SelfServiceNote what="the webhook URL and signing secret" />
       <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
         <TextInput
           label="Webhook URL"
@@ -327,11 +345,50 @@ export function WebhookCard({
             }}
             onDone={onChanged}
           />
+          <ConfirmAction
+            label="Send test webhook"
+            permission="manageBusinessAccess"
+            disabledReason={!business.webhookUrl ? "Set a webhook URL first" : undefined}
+            title="Send test webhook"
+            description={
+              <>
+                Posts a <span className="font-mono">webhook.test</span> event,
+                signed like a real one, to{" "}
+                <span className="break-all font-mono">{business.webhookUrl}</span>{" "}
+                now and shows what came back. No money moves.
+              </>
+            }
+            confirmLabel="Send now"
+            onConfirm={() =>
+              api.post<BusinessWebhookTestResult>(`${base}/webhook/test`)
+            }
+            onDone={(r) => {
+              if (isTestResult(r)) setTest(r);
+              deliveries.reload();
+            }}
+          />
         </div>
       </div>
       <p className="mt-2 text-xs text-muted">
         Signing secret: {business.hasWebhookSecret ? "set" : "not set"}.
       </p>
+      {test && (
+        <Alert tone={test.delivered ? "info" : "danger"} className="mt-3">
+          {test.delivered ? "Test webhook delivered" : "Test webhook not accepted"}
+          {test.statusCode !== null && ` (HTTP ${test.statusCode})`}.
+          {test.error && (
+            <span className="mt-1 block break-words font-mono text-xs">
+              {test.error}
+            </span>
+          )}
+          {!test.delivered && (
+            <span className="mt-1 block">
+              The business&apos;s server must answer with a 2xx status. Check the
+              URL is right and reachable from the internet.
+            </span>
+          )}
+        </Alert>
+      )}
 
       {canView && (
         <div className="mt-5">

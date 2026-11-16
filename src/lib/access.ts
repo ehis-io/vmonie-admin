@@ -58,6 +58,9 @@ export const PERMISSIONS = {
   recordBusinessTopUp: ["OPERATIONS", "FINANCE"],
   viewBusinessTopUps: ["OPERATIONS", "FINANCE"],
   decideBusinessTopUp: ["FINANCE"],
+  // People who sign in to the business's own dashboard.
+  viewBusinessUsers: ["SUPPORT", "OPERATIONS", "COMPLIANCE"],
+  manageBusinessUsers: ["OPERATIONS", "COMPLIANCE"],
 } satisfies Record<string, AdminRole[]>;
 
 export type Permission = keyof typeof PERMISSIONS;

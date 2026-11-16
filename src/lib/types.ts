@@ -785,3 +785,24 @@ export interface BusinessTransaction {
   completedAt: string | null;
   bill: BusinessBill | null;
 }
+
+export const BUSINESS_USER_ROLES = ["OWNER", "DEVELOPER", "VIEWER"] as const;
+export type BusinessUserRole = (typeof BUSINESS_USER_ROLES)[number];
+
+/** Someone who signs in to the business's Vmonie Business dashboard. */
+export interface BusinessUser {
+  id: string;
+  email: string;
+  name: string;
+  role: BusinessUserRole;
+  status: "INVITED" | "ACTIVE" | "DISABLED";
+  lastSignInAt: string | null;
+  createdAt: string;
+}
+
+/** POST /:id/webhook/test. */
+export interface BusinessWebhookTestResult {
+  delivered: boolean;
+  statusCode: number | null;
+  error: string | null;
+}

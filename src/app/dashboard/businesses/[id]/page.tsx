@@ -15,6 +15,7 @@ import {
   IpAllowlistCard,
   WebhookCard,
 } from "../../../../components/business/AccessCards";
+import { UsersCard } from "../../../../components/business/UsersCard";
 import {
   BusinessTransactionsCard,
   DiscountsCard,
@@ -195,6 +196,7 @@ export default function BusinessDetailPage() {
       </div>
 
       <div className="space-y-4">
+        <UsersCard business={b} />
         <ApiKeysCard business={b} onChanged={res.reload} />
         <div className="grid gap-4 xl:grid-cols-2">
           <IpAllowlistCard key={ipKey} business={b} onChanged={res.reload} />

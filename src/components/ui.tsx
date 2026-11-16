@@ -249,6 +249,8 @@ const STATUS_TONE: Record<string, BadgeTone> = {
   PENDING_APPROVAL: "warning",
   COMING_SOON: "warning",
   SUSPENDED: "warning",
+  INVITED: "info",
+  DISABLED: "neutral",
   PENDING: "info",
   CREATED: "info",
   SUBMITTED: "info",
