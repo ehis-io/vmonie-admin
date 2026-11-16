@@ -49,6 +49,9 @@ Type-check with `npx tsc --noEmit`.
 | Reconciliation | `/dashboard/reconciliation` | Open and resolved exceptions, resolve with a note, run reconciliation for a Lagos date. An unmatched deposit can be assigned through an adjustment that is pre-filled with SUSPENSE, the amount and the exception id. |
 | Adjustments | `/dashboard/adjustments` | Requests by status, approve/reject. The requester cannot decide their own (four-eyes). |
 | Request adjustment | `/dashboard/adjustments/new` | Pick the account by searching customers, then direction, amount in naira, counter ledger and reason. |
+| Businesses | `/dashboard/businesses` | Business API accounts by status, with wallet balance. New business (OPERATIONS/COMPLIANCE): created Pending. |
+| Business | `/dashboard/businesses/:id` | Details and wallet balance. Approve a Pending business (COMPLIANCE, not the creator); suspend, reactivate or close with a reason (COMPLIANCE). API keys: issue (OPERATIONS; the full key is shown once in a dialog and never kept) and revoke (OPERATIONS/COMPLIANCE). IP allowlist, webhook URL, signing-secret rotation (shown once) and delivery retries (OPERATIONS); deliveries (SUPPORT/OPERATIONS). Discount per bill type in bps (FINANCE), capped at Vmonie's markup so a bill is never sold below cost. Record a bank-transfer top-up (OPERATIONS/FINANCE) and this business's top-ups. Transactions, cursor-paged. |
+| Business top-ups | `/dashboard/businesses/top-ups` | Recorded top-ups across businesses by status; approve/reject (FINANCE, not the recorder). Approval credits the wallet. |
 | Support cases | `/dashboard/support` | The queue by status. |
 | Support case | `/dashboard/support/:id` | The full thread, with internal notes highlighted. Reply to the customer, add an internal note, change the status, assign to me. |
 | Webhooks | `/dashboard/webhooks` | Inbound partner events, filterable by status. |

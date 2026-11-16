@@ -41,6 +41,23 @@ export const PERMISSIONS = {
   // admin-customer-security.controller.ts: revoke a device, sign out
   // everywhere, force a PIN reset.
   customerSecurity: ["OPERATIONS"],
+  // Business API accounts (admin-businesses.controller.ts). Creating and
+  // approving a business, and recording and approving a top-up, each take
+  // two different people; the backend refuses the second step from the
+  // first person (FOUR_EYES).
+  viewBusinesses: ["SUPPORT", "OPERATIONS", "FINANCE", "COMPLIANCE"],
+  createBusiness: ["OPERATIONS", "COMPLIANCE"],
+  approveBusiness: ["COMPLIANCE"],
+  setBusinessStatus: ["COMPLIANCE"],
+  createBusinessKey: ["OPERATIONS"],
+  revokeBusinessKey: ["OPERATIONS", "COMPLIANCE"],
+  // IP allowlist, webhook URL, secret rotation and delivery retries.
+  manageBusinessAccess: ["OPERATIONS"],
+  viewBusinessWebhooks: ["SUPPORT", "OPERATIONS"],
+  setBusinessDiscount: ["FINANCE"],
+  recordBusinessTopUp: ["OPERATIONS", "FINANCE"],
+  viewBusinessTopUps: ["OPERATIONS", "FINANCE"],
+  decideBusinessTopUp: ["FINANCE"],
 } satisfies Record<string, AdminRole[]>;
 
 export type Permission = keyof typeof PERMISSIONS;
