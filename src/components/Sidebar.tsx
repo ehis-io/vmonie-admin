@@ -46,6 +46,16 @@ const SECTIONS: { title?: string; links: NavLink[] }[] = [
       { href: "/dashboard/transactions", label: "Transactions" },
       { href: "/dashboard/reconciliation", label: "Reconciliation" },
       { href: "/dashboard/adjustments", label: "Adjustments" },
+      {
+        href: "/dashboard/businesses",
+        label: "Businesses",
+        permission: "viewBusinesses",
+      },
+      {
+        href: "/dashboard/businesses/top-ups",
+        label: "Business top-ups",
+        permission: "viewBusinessTopUps",
+      },
       { href: "/dashboard/webhooks", label: "Webhooks" },
       { href: "/dashboard/reports", label: "Reports", permission: "viewReports" },
     ],
@@ -62,10 +72,22 @@ const SECTIONS: { title?: string; links: NavLink[] }[] = [
   },
 ];
 
-const isActive = (pathname: string, link: NavLink) =>
+const matches = (pathname: string, link: NavLink) =>
   link.exact
     ? pathname === link.href
     : pathname === link.href || pathname.startsWith(link.href + "/");
+
+const ALL_LINKS = SECTIONS.flatMap((s) => s.links);
+
+/** The deepest matching link wins: Business top-ups, not Businesses. */
+const isActive = (pathname: string, link: NavLink) =>
+  matches(pathname, link) &&
+  !ALL_LINKS.some(
+    (other) =>
+      other.href.length > link.href.length &&
+      other.href.startsWith(link.href + "/") &&
+      matches(pathname, other),
+  );
 
 /**
  * Sidebar on wide screens, collapsible top bar on narrow ones, as in

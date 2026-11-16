@@ -643,3 +643,166 @@ export interface OverviewStats {
   openComplianceHolds: number;
   openSupportCases: number;
 }
+
+// ─── Business API accounts (/admin/businesses) ────────────────────────────
+
+export const BUSINESS_STATUSES = [
+  "PENDING",
+  "ACTIVE",
+  "SUSPENDED",
+  "CLOSED",
+] as const;
+export type BusinessStatus = (typeof BUSINESS_STATUSES)[number];
+
+export const BILL_TYPES = [
+  "AIRTIME",
+  "DATA",
+  "CABLE_TV",
+  "ELECTRICITY",
+] as const;
+export type BillType = (typeof BILL_TYPES)[number];
+
+/** The most a business discount can be, in basis points (MAX_DISCOUNT_BPS). */
+export const MAX_DISCOUNT_BPS = 5000;
+
+export interface BusinessSummary {
+  id: string;
+  name: string;
+  rcNumber: string | null;
+  contactName: string | null;
+  contactEmail: string;
+  contactPhone: string | null;
+  status: BusinessStatus;
+  createdById: string;
+  approvedById: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+}
+
+/** A row of GET /admin/businesses: the summary and the wallet balance (kobo). */
+export interface BusinessListItem extends BusinessSummary {
+  balanceMinor: string;
+}
+
+/** An API key as staff see it: never the key itself, only its prefix. */
+export interface BusinessApiKey {
+  id: string;
+  prefix: string;
+  label: string | null;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+}
+
+export interface BusinessDiscount {
+  billType: BillType;
+  discountBps: number;
+  updatedAt?: string;
+}
+
+export interface BusinessDetail extends BusinessListItem {
+  /** IPs or CIDR ranges API calls may come from. Empty = any address. */
+  ipAllowlist: string[];
+  webhookUrl: string | null;
+  hasWebhookSecret: boolean;
+  apiKeys: BusinessApiKey[];
+  discounts: BusinessDiscount[];
+}
+
+/** POST /:id/keys. `key` is returned this once; only its hash is kept. */
+export interface CreatedBusinessKey {
+  id: string;
+  prefix: string;
+  label: string | null;
+  key: string;
+}
+
+/** PUT /:id/webhook. `secret` only the first time a URL is set. */
+export interface BusinessWebhookResult {
+  webhookUrl: string | null;
+  secret: string | null;
+}
+
+export interface BusinessWebhookDelivery {
+  id: string;
+  /** bill.successful, bill.failed, bill.reversed */
+  event: string;
+  status: "PENDING" | "DELIVERED" | "FAILED";
+  attempts: number;
+  lastStatusCode: number | null;
+  lastError: string | null;
+  nextAttemptAt: string;
+  deliveredAt: string | null;
+  createdAt: string;
+  payload?: unknown;
+}
+
+export type TopUpStatus = "PENDING_APPROVAL" | "APPROVED" | "REJECTED";
+
+export interface BusinessTopUp {
+  id: string;
+  businessId: string;
+  amountMinor: string;
+  bankReference: string;
+  note: string | null;
+  status: TopUpStatus;
+  requestedById: string;
+  decidedById: string | null;
+  decidedAt: string | null;
+  transactionId: string | null;
+  createdAt: string;
+  /** On the list; absent from the record response. */
+  business?: { name: string };
+}
+
+/** The bill a business bought, as stored. The token never reaches staff. */
+export interface BusinessBill {
+  type: BillType;
+  billerName: string;
+  productName: string | null;
+  customerIdentifier: string;
+  customerName: string | null;
+  providerFeeMinor: string | null;
+  vmonieFeeMinor: string | null;
+  /** The reseller discount taken off the fee. */
+  discountMinor: string | null;
+}
+
+/** GET /:id/transactions: newest first, 50 a page, cursor = last row's id. */
+export interface BusinessTransaction {
+  id: string;
+  reference: string;
+  businessId: string | null;
+  kind: string;
+  direction: "CREDIT" | "DEBIT";
+  status: TransactionStatus;
+  amountMinor: string;
+  feeMinor: string;
+  currency: string;
+  narration: string | null;
+  failureReason: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  bill: BusinessBill | null;
+}
+
+export const BUSINESS_USER_ROLES = ["OWNER", "DEVELOPER", "VIEWER"] as const;
+export type BusinessUserRole = (typeof BUSINESS_USER_ROLES)[number];
+
+/** Someone who signs in to the business's Vmonie Business dashboard. */
+export interface BusinessUser {
+  id: string;
+  email: string;
+  name: string;
+  role: BusinessUserRole;
+  status: "INVITED" | "ACTIVE" | "DISABLED";
+  lastSignInAt: string | null;
+  createdAt: string;
+}
+
+/** POST /:id/webhook/test. */
+export interface BusinessWebhookTestResult {
+  delivered: boolean;
+  statusCode: number | null;
+  error: string | null;
+}

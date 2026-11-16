@@ -133,7 +133,7 @@ export function describeError(err: unknown): string {
 // ─── Requests ─────────────────────────────────────────────────────────────
 
 async function request<T>(
-  method: "GET" | "POST",
+  method: "GET" | "POST" | "PUT",
   path: string,
   body?: unknown,
 ): Promise<T> {
@@ -194,6 +194,7 @@ async function request<T>(
 export const api = {
   get: <T>(path: string) => request<T>("GET", path),
   post: <T>(path: string, body: unknown = {}) => request<T>("POST", path, body),
+  put: <T>(path: string, body: unknown = {}) => request<T>("PUT", path, body),
 };
 
 /** Build a query string from the non-empty values. */
