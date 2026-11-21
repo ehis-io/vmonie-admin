@@ -19,6 +19,7 @@ import { SelfApproveBusiness } from "../../../../components/business/SelfApprove
 import { UsersCard } from "../../../../components/business/UsersCard";
 import {
   BusinessTransactionsCard,
+  VirtualAccountsCard,
   DiscountsCard,
   TopUpsCard,
 } from "../../../../components/business/MoneyCards";
@@ -212,6 +213,7 @@ export default function BusinessDetailPage() {
         </div>
         <WebhookCard business={b} onChanged={res.reload} />
         <TopUpsCard business={b} meId={me?.id} onChanged={res.reload} />
+        <VirtualAccountsCard businessId={b.id} />
         <BusinessTransactionsCard businessId={b.id} />
       </div>
     </>

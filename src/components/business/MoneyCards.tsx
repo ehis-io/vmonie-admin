@@ -14,6 +14,7 @@ import {
   type BusinessDetail,
   type BusinessTopUp,
   type BusinessTransaction,
+  type BusinessVirtualAccount,
 } from "../../lib/types";
 import { BusinessTopUpsTable } from "../BusinessTopUpsTable";
 import { ConfirmAction } from "../ConfirmAction";
@@ -265,6 +266,57 @@ export function TopUpsCard({
 // ─── Transactions ─────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 50;
+
+/**
+ * The account numbers the business opened for its users through the API,
+ * with what each has brought in. Read only.
+ */
+export function VirtualAccountsCard({ businessId }: { businessId: string }) {
+  const [stack, setStack] = useState<string[]>([]);
+  const cursor = stack[stack.length - 1];
+  const res = useResource<{ items: BusinessVirtualAccount[]; nextCursor: string | null }>(
+    `/admin/businesses/${businessId}/virtual-accounts${qs({ cursor })}`,
+  );
+  const rows = res.data?.items;
+
+  return (
+    <Card title="Virtual accounts">
+      <ErrorBox error={res.error} />
+      {!rows && res.loading && <Loading />}
+      {rows && rows.length === 0 && <Empty>No virtual accounts yet.</Empty>}
+      {rows && rows.length > 0 && (
+        <Table head={["Reference", "Account", "Holder", "Status", "Deposits", "Paid in", "Fees", "Created"]}>
+          {rows.map((a) => (
+            <tr key={a.id}>
+              <td className="font-mono text-xs">{a.customerReference}</td>
+              <td className="whitespace-nowrap">
+                <span className="font-mono">{a.accountNumber ?? "—"}</span>
+                {a.bankName && <span className="block text-xs text-muted">{a.bankName}</span>}
+              </td>
+              <td>{a.accountName ?? `${a.firstName} ${a.lastName}`}</td>
+              <td>
+                <Badge>{a.status}</Badge>
+                {a.lastError && a.status !== "ACTIVE" && (
+                  <span className="block max-w-xs text-xs text-danger">{a.lastError}</span>
+                )}
+              </td>
+              <td className="tabular-nums">{a.deposits}</td>
+              <td className="whitespace-nowrap tabular-nums">{formatKobo(a.paidInMinor)}</td>
+              <td className="whitespace-nowrap tabular-nums">{formatKobo(a.feesMinor)}</td>
+              <td className="whitespace-nowrap">{formatDateTime(a.createdAt)}</td>
+            </tr>
+          ))}
+        </Table>
+      )}
+      <CursorPager
+        stack={stack}
+        nextCursor={res.data?.nextCursor ?? null}
+        onChange={setStack}
+        busy={res.loading}
+      />
+    </Card>
+  );
+}
 
 export function BusinessTransactionsCard({ businessId }: { businessId: string }) {
   const [stack, setStack] = useState<string[]>([]);
