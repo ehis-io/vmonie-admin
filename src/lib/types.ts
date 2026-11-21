@@ -739,10 +739,57 @@ export interface BusinessWebhookDelivery {
 
 export type TopUpStatus = "PENDING_APPROVAL" | "APPROVED" | "REJECTED";
 
+export type SalesLeadStatus = "NEW" | "CONTACTED" | "ONBOARDED" | "NOT_A_FIT";
+
+/** A "Talk to sales" enquiry. */
+export interface SalesLead {
+  id: string;
+  businessName: string;
+  contactName: string;
+  email: string;
+  phone: string | null;
+  website: string | null;
+  /** BILLS, VIRTUAL_ACCOUNTS */
+  interests: string[];
+  /** UNDER_1M, 1M_10M, 10M_50M, 50M_PLUS */
+  monthlyVolume: string | null;
+  message: string | null;
+  status: SalesLeadStatus;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** An account number a business opened for one of its users. */
+export interface BusinessVirtualAccount {
+  id: string;
+  customerReference: string;
+  firstName: string;
+  lastName: string;
+  accountNumber: string | null;
+  accountName: string | null;
+  bankName: string | null;
+  providerCode: string;
+  status: "PENDING" | "FAILED" | "ACTIVE" | "FROZEN" | "CLOSED";
+  /** The bank's reason, when opening it failed. */
+  lastError: string | null;
+  createdAt: string;
+  /** Successful deposits into it. */
+  deposits: number;
+  /** What senders paid in, before the fee. */
+  paidInMinor: string;
+  feesMinor: string;
+}
+
 export interface BusinessTopUp {
   id: string;
   businessId: string;
+  /** What the business sent. */
   amountMinor: string;
+  /** Top-up fee (1%, at most ₦400): charged on approval, due if pending, 0 if rejected. */
+  feeMinor: string;
+  /** What reaches the wallet: amount − fee. */
+  creditMinor: string;
   bankReference: string;
   note: string | null;
   status: TopUpStatus;

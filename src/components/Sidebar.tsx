@@ -56,6 +56,11 @@ const SECTIONS: { title?: string; links: NavLink[] }[] = [
         label: "Business top-ups",
         permission: "viewBusinessTopUps",
       },
+      {
+        href: "/dashboard/sales-leads",
+        label: "Sales leads",
+        permission: "viewSalesLeads",
+      },
       { href: "/dashboard/webhooks", label: "Webhooks" },
       { href: "/dashboard/reports", label: "Reports", permission: "viewReports" },
     ],

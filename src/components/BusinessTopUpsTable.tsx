@@ -10,7 +10,8 @@ import { Badge, Table } from "./ui";
 
 /**
  * Recorded business top-ups with approve/reject. The person who recorded a
- * top-up cannot decide it (four-eyes); approval credits the wallet.
+ * top-up cannot decide it (four-eyes); approval credits the wallet with the
+ * amount less the top-up fee.
  */
 export function BusinessTopUpsTable({
   rows,
@@ -38,7 +39,9 @@ export function BusinessTopUpsTable({
       head={[
         "Recorded",
         ...(showBusiness ? ["Business"] : []),
-        "Amount",
+        "Sent",
+        "Fee",
+        "Credited",
         "Bank reference",
         "Note",
         "Status",
@@ -66,8 +69,14 @@ export function BusinessTopUpsTable({
                 </Link>
               </td>
             )}
+            <td className="whitespace-nowrap tabular-nums">
+              {formatKobo(t.amountMinor)}
+            </td>
+            <td className="whitespace-nowrap tabular-nums text-muted">
+              {formatKobo(t.feeMinor)}
+            </td>
             <td className="whitespace-nowrap tabular-nums text-success">
-              +{formatKobo(t.amountMinor)}
+              {t.status === "REJECTED" ? "—" : `+${formatKobo(t.creditMinor)}`}
             </td>
             <td className="font-mono text-xs">{t.bankReference}</td>
             <td className="max-w-xs">{t.note ?? "—"}</td>

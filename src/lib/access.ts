@@ -58,6 +58,9 @@ export const PERMISSIONS = {
   recordBusinessTopUp: ["OPERATIONS", "FINANCE"],
   viewBusinessTopUps: ["OPERATIONS", "FINANCE"],
   decideBusinessTopUp: ["FINANCE"],
+  // "Talk to sales" enquiries from the business dashboard's sign-in page.
+  viewSalesLeads: ["SUPPORT", "OPERATIONS", "COMPLIANCE"],
+  workSalesLeads: ["SUPPORT", "OPERATIONS"],
   // People who sign in to the business's own dashboard.
   viewBusinessUsers: ["SUPPORT", "OPERATIONS", "COMPLIANCE"],
   manageBusinessUsers: ["OPERATIONS", "COMPLIANCE"],
