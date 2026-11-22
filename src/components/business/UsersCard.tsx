@@ -23,6 +23,7 @@ import {
   Table,
   TextInput,
 } from "../ui";
+import { withBusinessAccessCode } from "../../lib/businessAccess";
 
 const ROLE_HELP: Record<BusinessUserRole, string> = {
   OWNER: "Everything, including the team",
@@ -71,7 +72,11 @@ export function UsersCard({ business }: { business: BusinessDetail }) {
   const n = name.trim();
 
   const invite = (body: { email: string; name: string; role: BusinessUserRole }) =>
-    explain(api.post<BusinessUser>(base, body));
+    explain(
+      withBusinessAccessCode(business.id, (proof) =>
+        api.post<BusinessUser>(base, { ...body, ...proof }),
+      ),
+    );
 
   return (
     <Card title="Dashboard users">

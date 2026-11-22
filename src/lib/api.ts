@@ -91,9 +91,20 @@ export function subscribeSession(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
-export function logout(): void {
-  clearSession();
-  window.location.replace("/login");
+/**
+ * Sign out: the server ends every session of this admin (so a copied token
+ * stops working too), then the token is dropped here. It is dropped even if
+ * the call fails.
+ */
+export async function logout(): Promise<void> {
+  try {
+    if (getToken()) await request("POST", "/admin/auth/sign-out");
+  } catch {
+    // Already expired or unreachable: signing out locally is enough.
+  } finally {
+    clearSession();
+    window.location.replace("/login");
+  }
 }
 
 // ─── Errors ───────────────────────────────────────────────────────────────
