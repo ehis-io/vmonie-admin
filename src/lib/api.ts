@@ -180,7 +180,11 @@ async function request<T>(
     );
     // An expired or revoked token: back to the login screen. The login call
     // itself also answers 401 for a wrong password, which must stay on screen.
-    if (response.status === 401 && path !== "/admin/auth/login") {
+    if (
+      response.status === 401 &&
+      path !== "/admin/auth/login" &&
+      path !== "/admin/auth/verify"
+    ) {
       clearSession();
       if (!window.location.pathname.startsWith("/login")) {
         window.location.replace("/login?expired=1");
