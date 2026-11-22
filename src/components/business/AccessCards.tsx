@@ -26,6 +26,7 @@ import {
   TextArea,
   TextInput,
 } from "../ui";
+import { withBusinessAccessCode } from "../../lib/businessAccess";
 
 /** The same settings are self-service in the business's own dashboard. */
 function SelfServiceNote({ what }: { what: string }) {
@@ -74,9 +75,12 @@ export function ApiKeysCard({
           }}
           confirmLabel="Issue key"
           onConfirm={async ({ text }) => {
-            const created = await api.post<CreatedBusinessKey>(`${base}/keys`, {
-              ...(text ? { label: text } : {}),
-            });
+            const created = await withBusinessAccessCode(business.id, (proof) =>
+              api.post<CreatedBusinessKey>(`${base}/keys`, {
+                ...(text ? { label: text } : {}),
+                ...proof,
+              }),
+            );
             setNewKey(created.key);
           }}
           onDone={onChanged}

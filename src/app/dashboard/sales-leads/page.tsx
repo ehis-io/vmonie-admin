@@ -172,7 +172,7 @@ function LeadCard({
           <dd>{lead.contactName}</dd>
           <dt className="text-muted">Email</dt>
           <dd>
-            <a href={`mailto:${lead.email}`} className="text-primary-soft hover:underline">
+            <a href={`mailto:${encodeURIComponent(lead.email)}`} className="text-primary-soft hover:underline">
               {lead.email}
             </a>
           </dd>
