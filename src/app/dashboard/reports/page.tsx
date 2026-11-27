@@ -7,7 +7,12 @@ import { humanize, lagosToday } from "../../../lib/format";
 import { formatKobo } from "../../../lib/money";
 import { useDocumentTitle } from "../../../lib/useDocumentTitle";
 import { useResource } from "../../../lib/useResource";
-import type { DailyReport, LedgerAccount, LedgerIntegrity } from "../../../lib/types";
+import type {
+  BillCommissionReport,
+  DailyReport,
+  LedgerAccount,
+  LedgerIntegrity,
+} from "../../../lib/types";
 import {
   Badge,
   Button,
@@ -18,6 +23,7 @@ import {
   Loading,
   Notice,
   PageHeader,
+  Select,
   Table,
   TextInput,
 } from "../../../components/ui";
@@ -114,6 +120,63 @@ function Ledger() {
   );
 }
 
+function Commission() {
+  const [days, setDays] = useState("30");
+  const res = useResource<BillCommissionReport>(`/admin/bills/commission${qs({ days })}`);
+  const r = res.data;
+  return (
+    <Card
+      title="Bill commission (FINANCE)"
+      className="mt-4"
+      actions={
+        <Select
+          aria-label="Window"
+          value={days}
+          onChange={(e) => setDays(e.target.value)}
+          options={[
+            { value: "7", label: "Last 7 days" },
+            { value: "30", label: "Last 30 days" },
+            { value: "90", label: "Last 90 days" },
+          ]}
+        />
+      }
+    >
+      <ErrorBox error={res.error} />
+      {!r && res.loading && <Loading />}
+      {r && (
+        <>
+          <div className="mb-4">
+            <KeyValues
+              rows={[
+                ["Bills with commission", r.totals.bills],
+                ["Commission received", formatKobo(r.totals.commissionMinor)],
+                ["Credited to businesses", formatKobo(r.totals.businessShareMinor)],
+                ["Kept by Vmonie", formatKobo(r.totals.keptMinor)],
+              ]}
+            />
+          </div>
+          {r.byBiller.length === 0 ? (
+            <Empty>No commission on successful bills in this window.</Empty>
+          ) : (
+            <Table head={["Type", "Biller", "Bills", "Received", "To businesses", "Kept"]}>
+              {r.byBiller.map((b) => (
+                <tr key={`${b.type}-${b.billerName}`}>
+                  <td>{humanize(b.type)}</td>
+                  <td>{b.billerName}</td>
+                  <td className="tabular-nums">{b.bills}</td>
+                  <td className="tabular-nums">{formatKobo(b.commissionMinor)}</td>
+                  <td className="tabular-nums">{formatKobo(b.businessShareMinor)}</td>
+                  <td className="tabular-nums">{formatKobo(b.keptMinor)}</td>
+                </tr>
+              ))}
+            </Table>
+          )}
+        </>
+      )}
+    </Card>
+  );
+}
+
 export default function ReportsPage() {
   useDocumentTitle("Reports");
   const canReports = useCan("viewReports");
@@ -141,6 +204,7 @@ export default function ReportsPage() {
           <Daily key={date} date={date} />
         </>
       )}
+      {canLedger && <Commission />}
       {canLedger && <Ledger />}
     </>
   );

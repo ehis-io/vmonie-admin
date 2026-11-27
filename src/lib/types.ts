@@ -853,3 +853,24 @@ export interface BusinessWebhookTestResult {
   statusCode: number | null;
   error: string | null;
 }
+
+/** GET /admin/bills/commission: provider commission on successful bills. */
+export interface BillCommissionRow {
+  type: string;
+  billerName: string;
+  bills: number;
+  commissionMinor: string;
+  businessShareMinor: string;
+  keptMinor: string;
+}
+export interface BillCommissionReport {
+  from: string;
+  days: number;
+  totals: {
+    bills: number;
+    commissionMinor: string;
+    businessShareMinor: string;
+    keptMinor: string;
+  };
+  byBiller: BillCommissionRow[];
+}
